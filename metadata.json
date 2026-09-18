@@ -1,0 +1,6 @@
+{
+  "name": "ApexBot - AWS EC2 Telegram Userbot Suite",
+  "description": "Production-grade Telegram userbot source code with inline button assistant bot support, modular plugins, and AWS EC2 deployment automation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
