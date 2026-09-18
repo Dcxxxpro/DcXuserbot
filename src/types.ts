@@ -34,6 +34,7 @@ export interface SimMessage {
   avatarText: string;
   text: string;
   time: string;
+  mediaUrl?: string;
   isEdited?: boolean;
   replyMarkup?: InlineButton[][];
 }

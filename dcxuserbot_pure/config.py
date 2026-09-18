@@ -26,9 +26,10 @@ class Config:
         if x.strip().isdigit()
     ]
     
-    # Custom Alive Profile
+    # Custom Alive & Help Media Profile
     ALIVE_NAME = os.getenv("ALIVE_NAME", "DcX Master")
     ALIVE_MEDIA = os.getenv("ALIVE_MEDIA", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200")
+    HELP_PIC = os.getenv("HELP_PIC", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200")
     
     # AI Engine API Keys
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
