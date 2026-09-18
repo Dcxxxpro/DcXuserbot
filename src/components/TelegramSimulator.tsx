@@ -57,34 +57,31 @@ export const TelegramSimulator: React.FC = () => {
             ],
           ],
         });
-      } else if (lower.startsWith('.help')) {
+      } else if (lower.startsWith('.help') || lower.startsWith('!help')) {
         addMessage({
           sender: 'assistant',
-          senderName: 'DcXAssistantBot (via Inline)',
+          senderName: 'DcXAssistantBot (via Inline Query)',
           avatarText: '🤖',
-          text: `**DcXuserbot Helper**\n**Provided by** DcX Assistant\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Active Modules: \`180+\`\nClick any category below to browse commands:`,
+          text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Sudo Prefix: \`!\`\nInteractive module browser powered by companion assistant bot.\n\nSelect a category below to explore available commands:`,
           replyMarkup: [
             [
-              { text: 'ℹ️ Info', callback_data: 'help_info' },
+              { text: '👮 Admin', callback_data: 'help_Admin' },
+              { text: '🛠️ Tools', callback_data: 'help_Tools' },
             ],
             [
-              { text: '👮 Admin (10)', callback_data: 'help_admin' },
-              { text: '🤖 Bot (2)', callback_data: 'help_bot' },
+              { text: '🧠 AI Suite', callback_data: 'help_AI' },
+              { text: '☁️ EC2 Status', callback_data: 'help_EC2' },
             ],
             [
-              { text: '🎭 Fun (29)', callback_data: 'help_fun' },
-              { text: '🧩 Misc (13)', callback_data: 'help_misc' },
+              { text: '🎨 Media', callback_data: 'help_Media' },
+              { text: '🛡️ PM Shield', callback_data: 'help_PM' },
             ],
             [
-              { text: '🧰 Tools (26)', callback_data: 'help_tools' },
-              { text: '📦 Utils (49)', callback_data: 'help_utils' },
+              { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
+              { text: '⚡ Alive Status', callback_data: 'alive_back' },
             ],
             [
-              { text: '➕ Extra (27)', callback_data: 'help_extra' },
-              { text: '⚰️ Useless (4)', callback_data: 'help_useless' },
-            ],
-            [
-              { text: '🔒 Close Menu', callback_data: 'help_close' },
+              { text: '❌ Close', callback_data: 'help_close' },
             ],
           ],
         });
@@ -250,111 +247,87 @@ export const TelegramSimulator: React.FC = () => {
             ],
           };
         }
-        if (cb === 'cb_help' || cb === 'help_back') {
+        if (cb === 'cb_help' || cb === 'help_back' || cb === 'help_main') {
           return {
             ...msg,
-            text: `**DcXuserbot Helper**\n**Provided by** DcX Assistant\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Active Modules: \`180+\`\nClick any category below to browse commands:`,
+            text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Sudo Prefix: \`!\`\nInteractive module browser powered by companion assistant bot.\n\nSelect a category below to explore available commands:`,
             replyMarkup: [
               [
-                { text: 'ℹ️ Info', callback_data: 'help_info' },
+                { text: '👮 Admin', callback_data: 'help_Admin' },
+                { text: '🛠️ Tools', callback_data: 'help_Tools' },
               ],
               [
-                { text: '👮 Admin (10)', callback_data: 'help_admin' },
-                { text: '🤖 Bot (2)', callback_data: 'help_bot' },
+                { text: '🧠 AI Suite', callback_data: 'help_AI' },
+                { text: '☁️ EC2 Status', callback_data: 'help_EC2' },
               ],
               [
-                { text: '🎭 Fun (29)', callback_data: 'help_fun' },
-                { text: '🧩 Misc (13)', callback_data: 'help_misc' },
+                { text: '🎨 Media', callback_data: 'help_Media' },
+                { text: '🛡️ PM Shield', callback_data: 'help_PM' },
               ],
               [
-                { text: '🧰 Tools (26)', callback_data: 'help_tools' },
-                { text: '📦 Utils (49)', callback_data: 'help_utils' },
+                { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
+                { text: '⚡ Alive Status', callback_data: 'alive_back' },
               ],
               [
-                { text: '➕ Extra (27)', callback_data: 'help_extra' },
-                { text: '⚰️ Useless (4)', callback_data: 'help_useless' },
-              ],
-              [
-                { text: '🔒 Close Menu', callback_data: 'help_close' },
+                { text: '❌ Close', callback_data: 'help_close' },
               ],
             ],
           };
         }
-        if (cb === 'help_info') {
+        if (cb === 'help_Admin' || cb === 'help_admin') {
           return {
             ...msg,
-            text: `ℹ️ **DcXuserbot Architecture & Info:**\n━━━━━━━━━━━━━━━━━━━━━━\n• **Core:** Dual-Client Telethon Engine\n• **Companion Bot:** Handles inline keyboards, PM permits, and interactive menus.\n• **Host:** AWS EC2 Cloud VM with 2GB Swap Memory\n• **Uptime:** 24/7 Background Systemd Service\n• **Modules:** 180+ plugins ported from the top Telegram userbots`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `👮 **Group Moderation:**\n• \`.ban <reply/user>\` - Ban user\n• \`.unban <reply/user>\` - Unban user\n• \`.mute <reply/user>\` - Mute in group\n• \`.kick <reply/user>\` - Kick user\n• \`.purge <reply>\` - Bulk delete messages\n• \`.pin\` - Pin message silently or loudly\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_admin') {
+        if (cb === 'help_Tools' || cb === 'help_tools') {
           return {
             ...msg,
-            text: `👮 **Admin Modules (10):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ban <reply/id>\` - Permanent ban\n• \`.unban <reply/id>\` - Remove group ban\n• \`.mute <reply/id>\` - Mute sender in group\n• \`.unmute <reply/id>\` - Lift mute restrictions\n• \`.kick <reply/id>\` - Kick member\n• \`.purge <reply>\` - Lightning bulk message purge\n• \`.pin\` - Silent or alert pin\n• \`.promote <title>\` - Grant admin permissions\n• \`.demote\` - Revoke admin privileges\n• \`.zombies\` - Clean deleted Telegram accounts`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `🛠️ **Utility Arsenal:**\n• \`.ping\` - Real-time latency with interactive inline buttons\n• \`.speedtest\` - Run network speed benchmark\n• \`.whois <reply>\` - Extract full user info & DC\n• \`.join <target>\` - Join channels & private invite hashes\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_bot') {
+        if (cb === 'help_AI' || cb === 'help_ai') {
           return {
             ...msg,
-            text: `🤖 **Bot Companion Modules (2):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.botstart\` - Check companion bot status\n• \`.inline\` - Inline menu generator & token validator`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `🧠 **Groq & Gemini AI Intelligence:**\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\n• \`.ai <prompt>\` - Ask Gemini AI directly\n• \`.summarize\` - Summarize replied chat messages\n• \`.code <prompt>\` - Generate & inspect code snippets\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_fun') {
+        if (cb === 'help_EC2' || cb === 'help_ec2' || cb === 'cb_ec2') {
           return {
             ...msg,
-            text: `🎭 **Fun Modules (29):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.quote\` - Create Quotly Telegram sticker\n• \`.meme <top> ; <bottom>\` - Generate meme\n• \`.type <text>\` - Typewriter animation\n• \`.slap <reply>\` - Slap someone with funny item\n• \`.dice\` - Roll animated Telegram dice\n• \`.roast <reply>\` - Hilarious burns & roasts`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `☁️ **AWS EC2 Cloud Controls:**\n• \`.ec2 status\` - Live instance load, CPU, RAM & uptime\n• \`.ec2 reboot\` - Soft reboot the bot daemon\n• \`.ec2 logs\` - Stream recent daemon journalctl output\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_misc') {
+        if (cb === 'help_Media' || cb === 'help_media') {
           return {
             ...msg,
-            text: `🧩 **Misc Modules (13):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.whois <reply>\` - Inspect User ID, DC, status\n• \`.id\` - Fetch chat & sender IDs\n• \`.time\` - Current local and UTC times\n• \`.ud <query>\` - Urban Dictionary definition\n• \`.google <query>\` - Instant search links`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `🎨 **Media & Converters:**\n• \`.quote\` - Create Quotly Telegram sticker\n• \`.song <name>\` - Download mp3 via yt-dlp\n• \`.video <name>\` - Download mp4 video\n• \`.telegraph\` - Upload media to Telegraph CDN\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_tools') {
+        if (cb === 'help_PM' || cb === 'help_pm') {
           return {
             ...msg,
-            text: `🧰 **Tools Modules (26):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ping\` - Sub-millisecond latency measurement\n• \`.speedtest\` - Live network speed test\n• \`.calc <math>\` - Built-in calculator\n• \`.wiki <query>\` - Wikipedia article lookup\n• \`.shorturl <url>\` - Shorten link`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `🛡️ **Anti-PM Spam Shield:**\n• \`.approve\` - Whitelist user for PM\n• \`.disapprove\` - Remove user from whitelist\n• \`.block\` - Immediately block user\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
-        if (cb === 'help_utils') {
+        if (cb === 'help_Broadcast' || cb === 'help_broadcast') {
           return {
             ...msg,
-            text: `📦 **Utils Modules (49):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.song <name>\` - High quality MP3 via yt-dlp\n• \`.video <name>\` - Download YouTube video\n• \`.telegraph\` - Upload media to Telegraph CDN\n• \`.ocr\` - Optical Character Recognition\n• \`.tts <text>\` - Text to speech audio clip`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
-          };
-        }
-        if (cb === 'help_extra') {
-          return {
-            ...msg,
-            text: `➕ **Extra Modules (27):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.tagall <text>\` - Mention all group members\n• \`.gcast <text>\` - Global broadcast to all chats\n• \`.ai <prompt>\` - Google Gemini AI assistant\n• \`.ec2 status\` - Live AWS cloud metrics\n• \`.pmpermit\` - Anti-spam security shield`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
-          };
-        }
-        if (cb === 'help_useless') {
-          return {
-            ...msg,
-            text: `⚰️ **Useless Modules (4):**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.f\` - Press F to pay respects\n• \`.shrug\` - ¯\\_(ツ)_/¯\n• \`.tableflip\` - (╯°□°)╯︵ ┻━┻\n• \`.unflip\` - ┬─┬ノ( º _ ºノ)`,
-            replyMarkup: [[{ text: '« Back to Helper', callback_data: 'help_back' }]],
+            text: `📢 **Broadcast & Mentions:**\n• \`.tagall <message>\` - Mention all members\n• \`.gcast <message>\` - Global broadcast to all chats\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
+            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_close') {
           return {
             ...msg,
-            text: `🔒 **Helper menu closed by user.**\nType \`.help\` anytime to re-open the interactive menu.`,
+            text: `❌ **Command Codex closed.**\nType \`.help\` anytime to re-open the interactive menu.`,
             replyMarkup: undefined,
-          };
-        }
-        if (cb === 'help_ec2' || cb === 'cb_ec2') {
-          return {
-            ...msg,
-            text: `☁️ **AWS EC2 Cloud Plugin:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ec2 status\` - Live CPU/RAM/Swap & instance metrics\n• \`.ec2 reboot\` - Graceful restart of dcxuserbot.service\n• \`.ec2 logs\` - Stream recent journalctl output`,
-            replyMarkup: [[{ text: '« Back to Index', callback_data: 'help_back' }]],
           };
         }
         if (cb === 'run_update_now') {

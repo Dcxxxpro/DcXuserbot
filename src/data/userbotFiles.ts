@@ -398,12 +398,12 @@ LOGS = logging.getLogger("DcXuserbot.Inline")
 
 HELP_CATEGORIES = {
     "Admin": "👮 **Group Moderation:**\\n• \`.ban <reply/user>\` - Ban user\\n• \`.unban <reply/user>\` - Unban user\\n• \`.mute <reply/user>\` - Mute in group\\n• \`.kick <reply/user>\` - Kick user\\n• \`.purge <reply>\` - Bulk delete messages\\n• \`.pin\` - Pin message silently or loudly",
-    "Media": "🎨 **Media & Converters:**\\n• \`.quote\` - Create Quotly Telegram sticker\\n• \`.song <name>\` - Download mp3 via yt-dlp\\n• \`.video <name>\` - Download mp4 video\\n• \`.telegraph\` - Upload media to Telegraph",
-    "AI": "🧠 **Groq & Gemini AI Intelligence:**\\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\\n• \`.ai <prompt>\` - Ask Gemini AI directly\\n• \`.summarize\` - Summarize replied chat messages\\n• \`.code <prompt>\` - Generate & inspect code snippets",
     "Tools": "🛠️ **Utility Arsenal:**\\n• \`.ping\` - Real-time latency with interactive inline buttons\\n• \`.speedtest\` - Run network speed benchmark\\n• \`.whois <reply>\` - Extract full user info & DC\\n• \`.join <target>\` - Join channels & private invite hashes",
+    "AI": "🧠 **Groq & Gemini AI Intelligence:**\\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\\n• \`.ai <prompt>\` - Ask Gemini AI directly\\n• \`.summarize\` - Summarize replied chat messages\\n• \`.code <prompt>\` - Generate & inspect code snippets",
+    "EC2": "☁️ **AWS EC2 Cloud Controls:**\\n• \`.ec2 status\` - Live instance load, CPU, RAM & uptime\\n• \`.ec2 reboot\` - Soft reboot the bot daemon",
+    "Media": "🎨 **Media & Converters:**\\n• \`.quote\` - Create Quotly Telegram sticker\\n• \`.song <name>\` - Download mp3 via yt-dlp\\n• \`.video <name>\` - Download mp4 video\\n• \`.telegraph\` - Upload media to Telegraph",
     "Broadcast": "📢 **Broadcast & Mentions:**\\n• \`.tagall <message>\` - Mention all members\\n• \`.gcast <message>\` - Global broadcast to all chats",
-    "PM": "🛡️ **Anti-PM Spam Shield:**\\n• \`.approve\` - Whitelist user for PM\\n• \`.disapprove\` - Remove user from whitelist\\n• \`.block\` - Immediately block user",
-    "EC2": "☁️ **AWS EC2 Cloud Controls:**\\n• \`.ec2 status\` - Live instance load & uptime\\n• \`.ec2 reboot\` - Soft reboot the bot daemon"
+    "PM": "🛡️ **Anti-PM Spam Shield:**\\n• \`.approve\` - Whitelist user for PM\\n• \`.disapprove\` - Remove user from whitelist\\n• \`.block\` - Immediately block user"
 }
 
 def get_alive_card_data(userbot):
@@ -453,6 +453,24 @@ def get_ping_card_data(latency=1.5):
     ]
     return text, buttons
 
+def get_help_card_data():
+    """Generate dynamic text and buttons for the Help Command Codex."""
+    menu_text = (
+        f"📖 **DcXuserbot Command Codex**\\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\\n"
+        f"Prefix: \`{Config.COMMAND_HAND_LER}\` | Sudo Prefix: \`{Config.SUDO_COMMAND_HAND_LER}\`\\n"
+        f"Interactive module browser powered by companion assistant bot.\\n\\n"
+        f"Select a category below to explore available commands:"
+    )
+    buttons = [
+        [Button.inline("👮 Admin", data=b"help_Admin"), Button.inline("🛠️ Tools", data=b"help_Tools")],
+        [Button.inline("🧠 AI Suite", data=b"help_AI"), Button.inline("☁️ EC2 Status", data=b"help_EC2")],
+        [Button.inline("🎨 Media", data=b"help_Media"), Button.inline("🛡️ PM Shield", data=b"help_PM")],
+        [Button.inline("📢 Broadcast", data=b"help_Broadcast"), Button.inline("⚡ Alive Status", data=b"alive_back")],
+        [Button.inline("❌ Close", data=b"help_close")]
+    ]
+    return menu_text, buttons
+
 def register_inline_callbacks(assistant, userbot):
     """
     Register Inline Query and Callback Query routers on the Assistant Bot.
@@ -476,7 +494,7 @@ def register_inline_callbacks(assistant, userbot):
             results.append(
                 builder.article(
                     title="⚡ DcXuserbot Status (Alive)",
-                    description=f"Uptime, AWS EC2 Telemetry & Interactive Buttons",
+                    description="Uptime, AWS EC2 Telemetry & Interactive Buttons",
                     text=alive_text,
                     buttons=alive_buttons,
                     link_preview=False
@@ -489,7 +507,7 @@ def register_inline_callbacks(assistant, userbot):
             results.append(
                 builder.article(
                     title="🏓 Ping Latency Benchmark",
-                    description=f"Measure response round-trip to Telegram & AWS EC2",
+                    description="Measure response round-trip to Telegram & AWS EC2",
                     text=ping_text,
                     buttons=ping_buttons,
                     link_preview=False
@@ -498,22 +516,11 @@ def register_inline_callbacks(assistant, userbot):
 
         # Query: .help
         if query.startswith("help"):
-            menu_text = (
-                f"📖 **DcXuserbot Command Codex**\\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\\n"
-                f"Prefix: \`{Config.COMMAND_HAND_LER}\` | Categories: \`{len(HELP_CATEGORIES)}\`\\n\\n"
-                f"Select a category below to browse available commands:"
-            )
-            buttons = [
-                [Button.inline("👮 Admin", data=b"help_Admin"), Button.inline("🎨 Media", data=b"help_Media")],
-                [Button.inline("🧠 AI Suite", data=b"help_AI"), Button.inline("🛠️ Tools", data=b"help_Tools")],
-                [Button.inline("📢 Broadcast", data=b"help_Broadcast"), Button.inline("🛡️ PM Shield", data=b"help_PM")],
-                [Button.inline("☁️ AWS EC2", data=b"help_EC2"), Button.inline("« Back to Alive", data=b"alive_back")]
-            ]
+            menu_text, buttons = get_help_card_data()
             results.append(
                 builder.article(
                     title="📖 Command Codex Help Menu",
-                    description="Browse all plugins, commands, and options",
+                    description="Interactive category browser: Admin, Tools, AI, EC2 Status, Close",
                     text=menu_text,
                     buttons=buttons,
                     link_preview=False
@@ -582,32 +589,31 @@ def register_inline_callbacks(assistant, userbot):
     @assistant.on(events.CallbackQuery(data=b"help_main"))
     async def cb_help_main(event):
         await event.answer()
-        menu_text = (
-            f"📖 **DcXuserbot Command Codex**\\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\\n"
-            f"Prefix: \`{Config.COMMAND_HAND_LER}\` | Categories: \`{len(HELP_CATEGORIES)}\`\\n\\n"
-            f"Select a category below to browse available commands:"
-        )
-        buttons = [
-            [Button.inline("👮 Admin", data=b"help_Admin"), Button.inline("🎨 Media", data=b"help_Media")],
-            [Button.inline("🧠 AI Suite", data=b"help_AI"), Button.inline("🛠️ Tools", data=b"help_Tools")],
-            [Button.inline("📢 Broadcast", data=b"help_Broadcast"), Button.inline("🛡️ PM Shield", data=b"help_PM")],
-            [Button.inline("☁️ AWS EC2", data=b"help_EC2"), Button.inline("« Back to Alive", data=b"alive_back")]
-        ]
+        menu_text, buttons = get_help_card_data()
         await event.edit(menu_text, buttons=buttons, link_preview=False)
 
     @assistant.on(events.CallbackQuery(data=re.compile(b"help_(.*)")))
     async def cb_help_category(event):
         cat_key = event.data_match.group(1).decode("utf-8")
-        if cat_key in HELP_CATEGORIES:
+        if cat_key == "close":
+            await event.answer("Help menu closed.", alert=False)
+            await event.delete()
+            return
+        elif cat_key == "main":
+            menu_text, buttons = get_help_card_data()
+            await event.edit(menu_text, buttons=buttons, link_preview=False)
+            return
+        elif cat_key in HELP_CATEGORIES:
             await event.answer()
-            cat_text = HELP_CATEGORIES[cat_key] + "\\n━━━━━━━━━━━━━━━━━━━━━━\\n💡 *Click Back to browse other categories.*"
+            cat_text = (
+                f"{HELP_CATEGORIES[cat_key]}\\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\\n"
+                f"💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*"
+            )
             buttons = [
-                [Button.inline("« Back to Help Menu", data=b"help_main"), Button.inline("« Back to Alive", data=b"alive_back")]
+                [Button.inline("« Back to Codex", data=b"help_main"), Button.inline("❌ Close", data=b"help_close")]
             ]
             await event.edit(cat_text, buttons=buttons, link_preview=False)
-        elif cat_key == "close":
-            await event.delete()
         else:
             await event.answer(f"Unknown category: {cat_key}", alert=True)
 
@@ -690,46 +696,98 @@ async def alive_handler(event):
     name: 'help.py',
     category: 'plugin',
     description: 'Interactive categorized inline help menu with pagination and module docs.',
-    content: `from telethon import Button
+    content: `"""
+DcXuserbot Interactive Help Codex Plugin
+Routes command codex queries through the Companion Assistant Bot (BOT_TOKEN)
+via Telegram Inline Queries to render interactive inline keyboard buttons:
+Admin, Tools, AI, EC2 Status, Media, PM Shield, Broadcast, and Close.
+"""
+
+import logging
+from telethon import Button
 from core.managers import register
 from config import Config
 
-CATEGORIES = {
+LOGS = logging.getLogger("DcXuserbot.Help")
+
+HELP_CATEGORIES = {
     "Admin": "👮 **Group Moderation:**\\n• \`.ban <reply/user>\` - Ban user\\n• \`.unban <reply/user>\` - Unban user\\n• \`.mute <reply/user>\` - Mute in group\\n• \`.kick <reply/user>\` - Kick user\\n• \`.purge <reply>\` - Bulk delete messages\\n• \`.pin\` - Pin message silently or loudly",
+    "Tools": "🛠️ **Utility Arsenal:**\\n• \`.ping\` - Real-time latency with interactive inline buttons\\n• \`.speedtest\` - Run network speed benchmark\\n• \`.whois <reply>\` - Extract full user info & DC\\n• \`.join <target>\` - Join channels & private invite hashes",
+    "AI": "🧠 **Groq & Gemini AI Intelligence:**\\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\\n• \`.ai <prompt>\` - Ask Gemini AI directly\\n• \`.summarize\` - Summarize replied chat messages\\n• \`.code <prompt>\` - Generate & inspect code snippets",
+    "EC2": "☁️ **AWS EC2 Cloud Controls:**\\n• \`.ec2 status\` - Live instance load, CPU, RAM & uptime\\n• \`.ec2 reboot\` - Soft reboot the bot daemon",
     "Media": "🎨 **Media & Converters:**\\n• \`.quote\` - Create Quotly Telegram sticker\\n• \`.song <name>\` - Download mp3 via yt-dlp\\n• \`.video <name>\` - Download mp4 video\\n• \`.telegraph\` - Upload media to Telegraph",
-    "AI": "🧠 **Gemini AI Suite:**\\n• \`.ai <prompt>\` - Ask Gemini AI directly\\n• \`.summarize\` - Summarize replied chat messages\\n• \`.code <prompt>\` - Generate & inspect code snippets",
-    "Tools": "🛠️ **Utility Arsenal:**\\n• \`.ping\` - Measure precise latency\\n• \`.speedtest\` - Run full network speedtest\\n• \`.whois <reply>\` - Extract full user info & DC\\n• \`.calc <expression>\` - Quick calculation",
     "Broadcast": "📢 **Broadcast & Mentions:**\\n• \`.tagall <message>\` - Mention all members\\n• \`.gcast <message>\` - Global broadcast to all chats",
-    "PM Shield": "🛡️ **Anti-PM Spam Shield:**\\n• \`.approve\` - Whitelist user for PM\\n• \`.disapprove\` - Remove user from whitelist\\n• \`.block\` - Immediately block user",
-    "EC2": "☁️ **AWS EC2 Cloud Controls:**\\n• \`.ec2 status\` - Live instance load & uptime\\n• \`.ec2 reboot\` - Soft reboot the bot daemon"
+    "PM": "🛡️ **Anti-PM Spam Shield:**\\n• \`.approve\` - Whitelist user for PM\\n• \`.disapprove\` - Remove user from whitelist\\n• \`.block\` - Immediately block user"
 }
 
 @register(pattern="help(?:\\s+(.*))?$")
 async def help_menu(event):
-    """Display the interactive command menu with categories and usage."""
-    query = event.pattern_match.group(1)
+    """
+    Display the interactive command codex with categories and usage.
+    Triggers an inline query to BOT_USERNAME to render interactive inline buttons.
+    """
+    arg = (event.pattern_match.group(1) or "").strip()
     
-    if query and query.capitalize() in CATEGORIES:
-        text = CATEGORIES[query.capitalize()]
-        await event.client.edit_or_reply(event, text)
-        return
-        
-    menu_text = (
+    # If specific category query requested directly: e.g. .help admin
+    if arg:
+        matched_cat = None
+        for key in HELP_CATEGORIES:
+            if key.lower() == arg.lower():
+                matched_cat = key
+                break
+                
+        if matched_cat:
+            cat_text = (
+                f"{HELP_CATEGORIES[matched_cat]}\\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\\n"
+                f"💡 *Type* \`{Config.COMMAND_HAND_LER}help\` *for interactive category buttons.*"
+            )
+            return await event.client.edit_or_reply(event, cat_text)
+        else:
+            return await event.client.edit_or_reply(
+                event,
+                f"❌ **Unknown category:** \`{arg}\`\\n"
+                f"Available: \`Admin\`, \`Tools\`, \`AI\`, \`EC2\`, \`Media\`, \`Broadcast\`, \`PM\`"
+            )
+
+    # 1. Route through Companion Assistant Bot via Telegram Inline Queries
+    if Config.BOT_TOKEN and Config.BOT_USERNAME:
+        bot_username = Config.BOT_USERNAME.replace("@", "").strip()
+        try:
+            LOGS.info(f"Querying assistant bot @{bot_username} for inline help codex...")
+            results = await event.client.inline_query(bot_username, "help")
+            if results and len(results) > 0:
+                await results[0].click(
+                    event.chat_id,
+                    reply_to=event.reply_to_msg_id,
+                    hide_via=True
+                )
+                await event.delete()
+                return
+            else:
+                LOGS.warning(f"Inline query to @{bot_username} returned 0 results. Check /setinline in @BotFather.")
+        except Exception as exc:
+            LOGS.warning(f"Could not render inline help menu via @{bot_username}: {exc}")
+
+    # 2. Text fallback if companion bot is not active or inline query is disabled
+    fallback_text = (
         f"📖 **DcXuserbot Command Codex**\\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\\n"
-        f"Prefix: \`{Config.COMMAND_HAND_LER}\` | Total Categories: \`{len(CATEGORIES)}\`\\n\\n"
-        f"Select a category below or type \`{Config.COMMAND_HAND_LER}help <category>\`:"
+        f"Prefix: \`{Config.COMMAND_HAND_LER}\` | Sudo: \`{Config.SUDO_COMMAND_HAND_LER}\`\\n\\n"
+        f"• **Admin:** \`.ban\`, \`.unban\`, \`.mute\`, \`.kick\`, \`.purge\`, \`.pin\`\\n"
+        f"• **Tools:** \`.ping\`, \`.speedtest\`, \`.whois\`, \`.join\`\\n"
+        f"• **AI Suite:** \`.aidm\`, \`.ai\`, \`.summarize\`, \`.code\`\\n"
+        f"• **EC2 Status:** \`.ec2 status\`, \`.ec2 reboot\`\\n"
+        f"• **Media:** \`.quote\`, \`.song\`, \`.video\`, \`.telegraph\`\\n"
+        f"• **PM Shield:** \`.approve\`, \`.disapprove\`, \`.block\`\\n"
+        f"• **Broadcast:** \`.tagall\`, \`.gcast\`\\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\\n"
+        f"💡 *Type* \`{Config.COMMAND_HAND_LER}help <category>\` *to view details.*"
     )
-    
-    # Inline buttons layout for interactive browsing
-    buttons = [
-        [Button.inline("👮 Admin", data="help_Admin"), Button.inline("🎨 Media", data="help_Media")],
-        [Button.inline("🧠 Gemini AI", data="help_AI"), Button.inline("🛠️ Tools", data="help_Tools")],
-        [Button.inline("📢 Broadcast", data="help_Broadcast"), Button.inline("🛡️ PM Shield", data="help_PM")],
-        [Button.inline("☁️ AWS EC2", data="help_EC2"), Button.inline("❌ Close", data="help_close")]
-    ]
-    
-    await event.client.edit_or_reply(event, menu_text)
+    if not Config.BOT_TOKEN or not Config.BOT_USERNAME:
+        fallback_text += f"\\n✨ *Configure BOT_TOKEN and enable /setinline in @BotFather for interactive inline buttons.*"
+        
+    await event.client.edit_or_reply(event, fallback_text)
 `
   },
   {
