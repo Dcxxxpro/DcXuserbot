@@ -27,6 +27,7 @@ SUDO_USERS=${customConfig.sudoUsers || ''}
 ALIVE_NAME=${customConfig.aliveName || 'DcX Commander'}
 ALIVE_MEDIA=https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
 GEMINI_API_KEY=${customConfig.geminiApiKey || ''}
+GROQ_API_KEY=
 PM_PERMIT=True
 PM_LIMIT=4
 AWS_REGION=${customConfig.awsRegion || 'us-east-1'}

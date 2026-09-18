@@ -18,15 +18,6 @@ from core.managers import register
 
 LOGS = logging.getLogger("DcXuserbot.Tools")
 
-@register(pattern="ping$")
-async def ping_test(event):
-    """Measure precise round-trip response time to Telegram data centers."""
-    start = time.perf_counter()
-    msg = await event.client.edit_or_reply(event, "🏓 **Pinging...**")
-    end = time.perf_counter()
-    latency = round((end - start) * 1000, 2)
-    await msg.edit(f"🏓 **Pong!** `{latency} ms`\n🛰️ Host: **AWS EC2 Cloud Node**")
-
 @register(pattern="speedtest(?:\\s+(.*))?$")
 async def network_speedtest(event):
     """Execute network speed benchmarking with server fallbacks."""
