@@ -21,11 +21,20 @@ export const PluginCatalog: React.FC = () => {
       name: 'Alive & System Profile',
       category: 'core',
       sourceInspiration: 'CatUserbot & Ultroid',
-      description: 'Dynamic userbot status card with uptime, live CPU/RAM metrics, and interactive inline callback buttons powered by the companion assistant bot.',
+      description: 'Dynamic userbot status card with uptime, live CPU/RAM metrics, and interactive inline callback buttons routed through the companion assistant bot using Telegram Inline Queries.',
       inlineButtons: true,
       commands: [
-        { syntax: '.alive', description: 'Show userbot status with inline buttons for stats and latency' },
-        { syntax: '.ping', description: 'Measure instant round-trip response time to Telegram data centers' },
+        { syntax: '.alive', description: 'Show interactive status card with System Stats, Latency Ping, and Help buttons' },
+      ],
+    },
+    {
+      name: 'Interactive Ping Benchmark',
+      category: 'tools',
+      sourceInspiration: 'CatUserbot & Telethon Inline Architecture',
+      description: 'Precision latency benchmark routing through companion assistant bot inline queries with live Re-Ping and System Metrics buttons.',
+      inlineButtons: true,
+      commands: [
+        { syntax: '.ping', description: 'Measure round-trip response time with interactive Re-Ping & Metrics inline keyboard' },
       ],
     },
     {

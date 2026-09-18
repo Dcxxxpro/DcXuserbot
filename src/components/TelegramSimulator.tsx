@@ -88,12 +88,22 @@ export const TelegramSimulator: React.FC = () => {
             ],
           ],
         });
-      } else if (lower === '.ping') {
+      } else if (lower === '.ping' || lower === '!ping') {
         addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Userbot',
-          avatarText: 'AB',
-          text: `🏓 **Pong!** \`38.4 ms\`\n🛰️ Data Center: **Telegram DC4 (Amsterdam)**\n☁️ Server: **AWS EC2 (us-east-1)**`,
+          sender: 'assistant',
+          senderName: 'DcXAssistantBot (via Inline Query)',
+          avatarText: '🤖',
+          text: `🏓 **Pong! Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n⚡ **Response Latency:** \`1.42 ms\`\n🛰️ **Cloud Node:** \`AWS EC2 (us-east-1)\`\n⏱️ **Server Time:** \`${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC\`\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Live Interactive Telethon Benchmark via Inline Queries*`,
+          replyMarkup: [
+            [
+              { text: '🔄 Re-Ping', callback_data: 'ping_refresh' },
+              { text: '📊 System Metrics', callback_data: 'alive_stats' },
+            ],
+            [
+              { text: '« Back to Alive', callback_data: 'alive_back' },
+              { text: '🛰️ AWS Console', url: 'https://aws.amazon.com' },
+            ],
+          ],
         });
       } else if (lower === '.pmpermit' || lower === '.pm') {
         addMessage({
@@ -198,32 +208,40 @@ export const TelegramSimulator: React.FC = () => {
         if (msg.id !== messageId) return msg;
 
         // Simulate callback state updates
-        if (cb === 'cb_stats') {
+        if (cb === 'cb_stats' || cb === 'alive_stats') {
           return {
             ...msg,
             text: `🖥️ **AWS EC2 System Breakdown**\n━━━━━━━━━━━━━━━━━━━━━━\n• **Instance:** \`i-08a912bf8ec29ab3\` (AWS us-east-1)\n• **CPU Cores:** \`2 vCPUs\` (@ 2.50GHz)\n• **CPU Load:** \`4.2%\`\n• **RAM Usage:** \`28% (276 MB / 988 MB)\`\n• **Swap Memory:** \`3.1% (64 MB / 2048 MB)\`\n• **Disk IO:** \`Read 1.2 MB/s | Write 420 KB/s\`\n• **Uptime:** \`4 days, 18 hours\``,
             replyMarkup: [
-              [{ text: '« Back to Alive', callback_data: 'cb_alive_back' }],
+              [{ text: '« Back to Alive', callback_data: 'alive_back' }, { text: '⚡ Latency Ping', callback_data: 'alive_ping' }],
             ],
           };
         }
-        if (cb === 'cb_ping') {
+        if (cb === 'cb_ping' || cb === 'alive_ping' || cb === 'ping_refresh') {
+          const randLat = (1.2 + Math.random() * 0.6).toFixed(2);
           return {
             ...msg,
-            text: `⚡ **Live Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n• **AWS EC2 -> Telegram DC4:** \`26.4 ms\`\n• **AWS EC2 -> Telegram DC2:** \`41.2 ms\`\n• **Packet Loss:** \`0.0%\`\n• **Clock Drift:** \`< 1 ms (NTP synced)\``,
+            text: `⚡ **Live Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n• **AWS EC2 -> Telegram DC4:** \`${randLat} ms\`\n• **AWS EC2 -> Telegram DC2:** \`24.1 ms\`\n• **Packet Loss:** \`0.0%\`\n• **Clock Drift:** \`< 1 ms (NTP synced)\``,
             replyMarkup: [
-              [{ text: '« Back to Alive', callback_data: 'cb_alive_back' }],
+              [
+                { text: '🔄 Re-Ping', callback_data: 'ping_refresh' },
+                { text: '📊 System Metrics', callback_data: 'alive_stats' },
+              ],
+              [
+                { text: '« Back to Alive', callback_data: 'alive_back' },
+                { text: '🛰️ AWS Console', url: 'https://aws.amazon.com' },
+              ],
             ],
           };
         }
-        if (cb === 'cb_alive_back') {
+        if (cb === 'cb_alive_back' || cb === 'alive_back') {
           return {
             ...msg,
             text: `⚡ **DcXuserbot Superior Userbot Online!**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⏳ **Uptime:** \`4d 18h 32m 10s\`\n⚙️ **CPU / RAM:** \`4.2% / 18.5%\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n🤖 **Assistant:** @DcXAssistantBot\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Interactive inline buttons below:*`,
             replyMarkup: [
               [
-                { text: '📊 System Stats', callback_data: 'cb_stats' },
-                { text: '⚡ Ping Test', callback_data: 'cb_ping' },
+                { text: '📊 System Stats', callback_data: 'alive_stats' },
+                { text: '⚡ Ping Test', callback_data: 'alive_ping' },
               ],
               [
                 { text: '📖 Help Menu', callback_data: 'cb_help' },

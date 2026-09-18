@@ -1,13 +1,24 @@
+"""
+DcXuserbot Alive Status Plugin
+Triggers dual-client inline queries through the companion assistant bot (BOT_TOKEN)
+to render interactive inline keyboards on user messages.
+"""
+
 import time
 import psutil
-from telethon import Button
+import logging
 from core.managers import register
 from config import Config
 
+LOGS = logging.getLogger("DcXuserbot.Alive")
+
 @register(pattern="alive$")
 async def alive_handler(event):
-    """Check if DcXuserbot is active, showing uptime, AWS metrics and inline buttons."""
-    uptime = round(time.time() - event.client.start_time)
+    """
+    Check userbot status with uptime, AWS EC2 metrics, and interactive inline buttons.
+    Routes through Companion Assistant Bot via Telegram Inline Queries.
+    """
+    uptime = round(time.time() - getattr(event.client, "start_time", time.time()))
     hours, rem = divmod(uptime, 3600)
     minutes, seconds = divmod(rem, 60)
     
@@ -15,7 +26,7 @@ async def alive_handler(event):
     ram = psutil.virtual_memory().percent
     me = await event.client.get_me()
     
-    alive_text = (
+    fallback_text = (
         f"⚡ **DcXuserbot Superior Userbot Online!**\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👑 **Owner:** [{Config.ALIVE_NAME}](tg://user?id={me.id})\n"
@@ -27,16 +38,27 @@ async def alive_handler(event):
         f"✨ *Type* `{Config.COMMAND_HAND_LER}help` *for all commands.*"
     )
     
-    # If companion bot is configured, trigger inline query or bot message with buttons!
+    # Check if companion assistant bot is available for inline queries
     if Config.BOT_TOKEN and Config.BOT_USERNAME:
-        # CatUserbot pattern: invoke inline query to get inline buttons
+        bot_username = Config.BOT_USERNAME.replace("@", "").strip()
         try:
-            results = await event.client.inline_query(Config.BOT_USERNAME, "alive")
-            await results[0].click(event.chat_id, reply_to=event.reply_to_msg_id, hide_via=True)
-            await event.delete()
-            return
-        except Exception:
-            pass
+            LOGS.info(f"Querying assistant bot @{bot_username} for inline alive card...")
+            results = await event.client.inline_query(bot_username, "alive")
+            if results and len(results) > 0:
+                # Send the inline query result with interactive buttons into the chat
+                await results[0].click(
+                    event.chat_id,
+                    reply_to=event.reply_to_msg_id,
+                    hide_via=True
+                )
+                # Clean up triggering command
+                await event.delete()
+                return
+            else:
+                LOGS.warning(f"Inline query to @{bot_username} returned 0 results. Check /setinline in @BotFather.")
+        except Exception as exc:
+            LOGS.warning(f"Could not render inline alive keyboard via @{bot_username}: {exc}")
+            fallback_text += f"\n\n💡 *Note: Enable Inline Mode in @BotFather via /setinline for @{bot_username} to activate buttons.*"
 
-    # Fallback to direct edit if inline query fails
-    await event.client.edit_or_reply(event, alive_text)
+    # Fallback to direct edit or reply if inline query is unavailable
+    await event.client.edit_or_reply(event, fallback_text)
