@@ -398,6 +398,23 @@ sudo journalctl -u dcxuserbot -f
               {userDataScript}
             </div>
           </div>
+
+          {/* Telegram In-Chat Auto-Update Card */}
+          <div className="bg-gradient-to-r from-sky-950/40 to-slate-900 border border-sky-500/30 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
+                <Terminal className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-slate-200">
+                  Zero-SSH In-Chat Telegram Updater: <code className="text-sky-300 font-mono">.update</code> or <code className="text-sky-300 font-mono">!update</code>
+                </h4>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Whenever you push new code to your GitHub repo, simply send <code className="text-emerald-400 font-mono">.update now</code> (or <code className="text-emerald-400 font-mono">!update now</code>) in any Telegram chat. DcXuserbot will run <code className="text-slate-300 font-mono">git pull</code>, sync requirements, and restart itself automatically on your EC2 instance.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

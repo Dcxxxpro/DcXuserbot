@@ -89,6 +89,17 @@ export const PluginCatalog: React.FC = () => {
       ],
     },
     {
+      name: 'GitHub Cloud Auto-Updater',
+      category: 'cloud',
+      sourceInspiration: 'Telegram Git Integration',
+      description: 'Check commits from your connected GitHub repository and pull updates directly into your AWS EC2 instance with dependency syncing and auto-restarting.',
+      inlineButtons: true,
+      commands: [
+        { syntax: '.update', description: 'Check for new commits on GitHub and inspect changelog preview' },
+        { syntax: '.update now (or !update)', description: 'Pull latest code via git pull, install any new requirements, and restart systemd service' },
+      ],
+    },
+    {
       name: 'AWS EC2 Instance Monitor & Daemon',
       category: 'cloud',
       sourceInspiration: 'Cloud Enterprise Upgrade',
@@ -96,7 +107,7 @@ export const PluginCatalog: React.FC = () => {
       inlineButtons: false,
       commands: [
         { syntax: '.ec2 status', description: 'Display live AWS EC2 CPU, RAM, Swap and Disk metrics' },
-        { syntax: '.ec2 reboot', description: 'Trigger graceful reload of apexbot.service systemd unit' },
+        { syntax: '.ec2 reboot', description: 'Trigger graceful reload of dcxuserbot.service systemd unit' },
       ],
     },
     {

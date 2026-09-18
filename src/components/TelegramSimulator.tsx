@@ -108,6 +108,29 @@ export const TelegramSimulator: React.FC = () => {
             ],
           ],
         });
+      } else if (lower.startsWith('.update') || lower.startsWith('!update')) {
+        const isNow = lower.includes('now') || lower.includes('pull') || lower.includes('force');
+        if (!isNow) {
+          addMessage({
+            sender: 'bot',
+            senderName: 'DcXuserbot GitHub Sync',
+            avatarText: '🔄',
+            text: `🚀 **3 New Update(s) Found on GitHub!**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`7a1e9b2\` - Added auto-updater plugin (.update & !update)\n• \`4f8c210\` - Inline helper buttons parity with CatUserbot\n• \`9b3d014\` - AWS EC2 systemd auto-healing and 2GB swap optimizer\n━━━━━━━━━━━━━━━━━━━━━━\n💡 To pull the latest GitHub code and automatically restart your EC2 bot, run:\n👉 \`.update now\` (or \`!update now\`)`,
+            replyMarkup: [
+              [
+                { text: '⚡ Pull Updates & Restart Now', callback_data: 'run_update_now' },
+                { text: '« Dismiss', callback_data: 'help_close' },
+              ],
+            ],
+          });
+        } else {
+          addMessage({
+            sender: 'bot',
+            senderName: 'DcXuserbot GitHub Sync',
+            avatarText: '⚡',
+            text: `📥 **Pulling latest commits from GitHub...**\n━━━━━━━━━━━━━━━━━━━━━━\n• Executed: \`git pull --rebase\`\n• Checking \`requirements.txt\` for new packages... (synchronized)\n• Executing: \`sudo systemctl restart dcxuserbot\`\n\n✅ **Updated successfully!** Bot restarted and live on AWS EC2.\nType \`.alive\` to verify latest version!`,
+          });
+        }
       } else if (lower.startsWith('.ai')) {
         const query = trimmed.replace(/^\.ai\s*/i, '') || 'Tell me about AWS EC2 and Telegram Userbots';
         addMessage({
@@ -294,6 +317,13 @@ export const TelegramSimulator: React.FC = () => {
             replyMarkup: [[{ text: '« Back to Index', callback_data: 'help_back' }]],
           };
         }
+        if (cb === 'run_update_now') {
+          return {
+            ...msg,
+            text: `📥 **Pulling latest commits from GitHub...**\n━━━━━━━━━━━━━━━━━━━━━━\n• Executed: \`git pull --rebase\`\n• Checking \`requirements.txt\` for new packages... (synchronized)\n• Executing: \`sudo systemctl restart dcxuserbot\`\n\n✅ **Updated successfully!** Bot restarted and live on AWS EC2.\nType \`.alive\` to verify latest version!`,
+            replyMarkup: undefined,
+          };
+        }
         if (cb === 'pm_req') {
           return {
             ...msg,
@@ -321,6 +351,7 @@ export const TelegramSimulator: React.FC = () => {
   };
 
   const quickCommands = [
+    { cmd: '.update', label: '.update (GitHub Sync)', icon: RefreshCw },
     { cmd: '.alive', label: '.alive (Interactive Buttons)', icon: Zap },
     { cmd: '.help', label: '.help (Codex Menu)', icon: Info },
     { cmd: '.ping', label: '.ping (Latency)', icon: RefreshCw },
