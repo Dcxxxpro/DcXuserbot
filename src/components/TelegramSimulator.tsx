@@ -45,6 +45,7 @@ export const TelegramSimulator: React.FC = () => {
           sender: 'assistant',
           senderName: 'DcXAssistantBot (via Inline)',
           avatarText: '🤖',
+          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
           text: `⚡ **DcXuserbot Superior Userbot Online!**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⏳ **Uptime:** \`4d 18h 32m 10s\`\n⚙️ **CPU / RAM:** \`4.2% / 18.5%\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n🤖 **Assistant:** @DcXAssistantBot\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Interactive inline buttons below (CatUserbot Dual-Client architecture):*`,
           replyMarkup: [
             [
@@ -62,26 +63,27 @@ export const TelegramSimulator: React.FC = () => {
           sender: 'assistant',
           senderName: 'DcXAssistantBot (via Inline Query)',
           avatarText: '🤖',
-          text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Sudo Prefix: \`!\`\nInteractive module browser powered by companion assistant bot.\n\nSelect a category below to explore available commands:`,
+          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+          text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⚡ **Prefix:** \`.\` | **Sudo:** \`!\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n━━━━━━━━━━━━━━━━━━━━━━\nTap any category below to browse available commands:`,
           replyMarkup: [
             [
               { text: '👮 Admin', callback_data: 'help_Admin' },
               { text: '🛠️ Tools', callback_data: 'help_Tools' },
+              { text: '🧠 AI', callback_data: 'help_AI' },
             ],
             [
-              { text: '🧠 AI Suite', callback_data: 'help_AI' },
-              { text: '☁️ EC2 Status', callback_data: 'help_EC2' },
-            ],
-            [
+              { text: '☁️ EC2', callback_data: 'help_EC2' },
               { text: '🎨 Media', callback_data: 'help_Media' },
               { text: '🛡️ PM Shield', callback_data: 'help_PM' },
             ],
             [
               { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
-              { text: '⚡ Alive Status', callback_data: 'alive_back' },
+              { text: '⚡ Ping', callback_data: 'alive_ping' },
+              { text: '📊 Stats', callback_data: 'alive_stats' },
             ],
             [
-              { text: '❌ Close', callback_data: 'help_close' },
+              { text: '« Back to Alive', callback_data: 'alive_back' },
+              { text: '❌ Close Menu', callback_data: 'help_close' },
             ],
           ],
         });
@@ -90,6 +92,7 @@ export const TelegramSimulator: React.FC = () => {
           sender: 'assistant',
           senderName: 'DcXAssistantBot (via Inline Query)',
           avatarText: '🤖',
+          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
           text: `🏓 **Pong! Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n⚡ **Response Latency:** \`1.42 ms\`\n🛰️ **Cloud Node:** \`AWS EC2 (us-east-1)\`\n⏱️ **Server Time:** \`${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC\`\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Live Interactive Telethon Benchmark via Inline Queries*`,
           replyMarkup: [
             [
@@ -250,26 +253,27 @@ export const TelegramSimulator: React.FC = () => {
         if (cb === 'cb_help' || cb === 'help_back' || cb === 'help_main') {
           return {
             ...msg,
-            text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\nPrefix: \`.\` | Sudo Prefix: \`!\`\nInteractive module browser powered by companion assistant bot.\n\nSelect a category below to explore available commands:`,
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⚡ **Prefix:** \`.\` | **Sudo:** \`!\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n━━━━━━━━━━━━━━━━━━━━━━\nTap any category below to browse available commands:`,
             replyMarkup: [
               [
                 { text: '👮 Admin', callback_data: 'help_Admin' },
                 { text: '🛠️ Tools', callback_data: 'help_Tools' },
+                { text: '🧠 AI', callback_data: 'help_AI' },
               ],
               [
-                { text: '🧠 AI Suite', callback_data: 'help_AI' },
-                { text: '☁️ EC2 Status', callback_data: 'help_EC2' },
-              ],
-              [
+                { text: '☁️ EC2', callback_data: 'help_EC2' },
                 { text: '🎨 Media', callback_data: 'help_Media' },
                 { text: '🛡️ PM Shield', callback_data: 'help_PM' },
               ],
               [
                 { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
-                { text: '⚡ Alive Status', callback_data: 'alive_back' },
+                { text: '⚡ Ping', callback_data: 'alive_ping' },
+                { text: '📊 Stats', callback_data: 'alive_stats' },
               ],
               [
-                { text: '❌ Close', callback_data: 'help_close' },
+                { text: '« Back to Alive', callback_data: 'alive_back' },
+                { text: '❌ Close Menu', callback_data: 'help_close' },
               ],
             ],
           };
@@ -277,56 +281,63 @@ export const TelegramSimulator: React.FC = () => {
         if (cb === 'help_Admin' || cb === 'help_admin') {
           return {
             ...msg,
-            text: `👮 **Group Moderation:**\n• \`.ban <reply/user>\` - Ban user\n• \`.unban <reply/user>\` - Unban user\n• \`.mute <reply/user>\` - Mute in group\n• \`.kick <reply/user>\` - Kick user\n• \`.purge <reply>\` - Bulk delete messages\n• \`.pin\` - Pin message silently or loudly\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `👮 **Group Moderation & Administration:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ban <reply/user>\` - Ban user from current chat\n• \`.unban <reply/user>\` - Unban user from group\n• \`.mute <reply/user>\` - Mute member in group\n• \`.unmute <reply/user>\` - Unmute restricted member\n• \`.kick <reply/user>\` - Kick member from group\n• \`.purge <reply>\` - Lightning bulk purge messages\n• \`.pin [loud]\` - Pin replied message silently or with alert\n• \`.promote <title>\` - Promote member to admin status\n• \`.demote\` - Revoke administrator rights\n• \`.zombies\` - Clean deleted Telegram accounts\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_Tools' || cb === 'help_tools') {
           return {
             ...msg,
-            text: `🛠️ **Utility Arsenal:**\n• \`.ping\` - Real-time latency with interactive inline buttons\n• \`.speedtest\` - Run network speed benchmark\n• \`.whois <reply>\` - Extract full user info & DC\n• \`.join <target>\` - Join channels & private invite hashes\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `🛠️ **Utility Arsenal & Diagnostics:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ping\` - Sub-millisecond latency benchmark with inline buttons\n• \`.speedtest\` - Run live network bandwidth benchmark\n• \`.whois <reply>\` - Extract full user info, ID, DC & bio\n• \`.join <target>\` - Join channels & private invite hashes\n• \`.calc <math>\` - Built-in high-precision calculator\n• \`.id\` - Fetch chat ID, sender ID, and DC number\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_AI' || cb === 'help_ai') {
           return {
             ...msg,
-            text: `🧠 **Groq & Gemini AI Intelligence:**\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\n• \`.ai <prompt>\` - Ask Gemini AI directly\n• \`.summarize\` - Summarize replied chat messages\n• \`.code <prompt>\` - Generate & inspect code snippets\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `🧠 **Groq & Gemini Artificial Intelligence:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\n• \`.ai <prompt>\` - Ask Google Gemini AI directly with multimodal\n• \`.summarize\` - Summarize replied chat conversation\n• \`.code <prompt>\` - Generate, explain & inspect code snippets\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_EC2' || cb === 'help_ec2' || cb === 'cb_ec2') {
           return {
             ...msg,
-            text: `☁️ **AWS EC2 Cloud Controls:**\n• \`.ec2 status\` - Live instance load, CPU, RAM & uptime\n• \`.ec2 reboot\` - Soft reboot the bot daemon\n• \`.ec2 logs\` - Stream recent daemon journalctl output\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `☁️ **AWS EC2 Cloud Infrastructure:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ec2 status\` - Live instance load, CPU, RAM & disk telemetry\n• \`.ec2 reboot\` - Graceful soft reboot of dcxuserbot daemon\n• \`.ec2 logs\` - Inspect live systemd service journalctl logs\n• \`Host Node:\` AWS EC2 us-east-1 (Amazon Linux 2023)\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_Media' || cb === 'help_media') {
           return {
             ...msg,
-            text: `🎨 **Media & Converters:**\n• \`.quote\` - Create Quotly Telegram sticker\n• \`.song <name>\` - Download mp3 via yt-dlp\n• \`.video <name>\` - Download mp4 video\n• \`.telegraph\` - Upload media to Telegraph CDN\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `🎨 **Media Converters & Downloader:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.quote\` - Convert replied message into Quotly Telegram sticker\n• \`.song <name>\` - Download high-res audio mp3 via yt-dlp\n• \`.video <name>\` - Download YouTube & social video clips\n• \`.telegraph\` - Upload media to Telegraph CDN fast\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_PM' || cb === 'help_pm') {
           return {
             ...msg,
-            text: `🛡️ **Anti-PM Spam Shield:**\n• \`.approve\` - Whitelist user for PM\n• \`.disapprove\` - Remove user from whitelist\n• \`.block\` - Immediately block user\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `🛡️ **Anti-PM Spam Shield & Gatekeeper:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.approve\` - Whitelist replied user for private messages\n• \`.disapprove\` - Remove user from approved whitelist\n• \`.block\` - Immediately block spammer and report\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_Broadcast' || cb === 'help_broadcast') {
           return {
             ...msg,
-            text: `📢 **Broadcast & Mentions:**\n• \`.tagall <message>\` - Mention all members\n• \`.gcast <message>\` - Global broadcast to all chats\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click 'Back to Codex' to browse other categories or 'Close' to dismiss.*`,
-            replyMarkup: [[{ text: '« Back to Codex', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
+            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+            text: `📢 **Broadcast & Mass Mentions:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.tagall [message]\` - Mention all group members safely\n• \`.gcast <message>\` - Broadcast announcements across joined groups\n• \`.cancel\` - Stop ongoing tagall or broadcast task\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
+            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
           };
         }
         if (cb === 'help_close') {
           return {
             ...msg,
-            text: `❌ **Command Codex closed.**\nType \`.help\` anytime to re-open the interactive menu.`,
+            text: `❌ **Command Codex closed.**\nType \`.help\` anytime to re-open the interactive 3-column menu.`,
             replyMarkup: undefined,
           };
         }
@@ -467,6 +478,18 @@ export const TelegramSimulator: React.FC = () => {
                         : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'
                     }`}
                   >
+                    {/* Header Photo Banner */}
+                    {msg.mediaUrl && (
+                      <div className="mb-3 -mx-1 -mt-1 overflow-hidden rounded-xl border border-slate-700/60 shadow-md">
+                        <img
+                          src={msg.mediaUrl}
+                          alt="Header Photo Banner"
+                          className="w-full h-32 sm:h-36 object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+
                     <div className="whitespace-pre-wrap">{msg.text}</div>
 
                     {/* Inline Keyboard Buttons (CatUserbot style) */}

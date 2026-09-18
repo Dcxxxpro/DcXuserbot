@@ -41,10 +41,10 @@ export const PluginCatalog: React.FC = () => {
       name: 'Interactive Codex Help Menu',
       category: 'core',
       sourceInspiration: 'CatUserbot & Paperplane',
-      description: 'Categorized inline help menu with pagination buttons, interactive category navigation, and quick syntax lookups.',
+      description: 'Rich categorized inline help menu featuring a header photo banner, 3-column styled button grid, and dynamic callback navigation with Back controls.',
       inlineButtons: true,
       commands: [
-        { syntax: '.help', description: 'Open interactive inline help category navigator' },
+        { syntax: '.help', description: 'Open rich inline help menu with photo banner and 3-column button grid' },
         { syntax: '.help <category>', description: 'Directly output command reference for a specific module' },
       ],
     },
