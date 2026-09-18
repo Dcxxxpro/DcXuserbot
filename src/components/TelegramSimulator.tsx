@@ -146,6 +146,28 @@ export const TelegramSimulator: React.FC = () => {
           avatarText: '☁️',
           text: `☁️ **AWS EC2 Live Metrics**\n━━━━━━━━━━━━━━━━━━━━━━\n• **Instance ID:** \`i-08a912bf8ec29ab3\`\n• **Type:** \`t3.micro (2 vCPU, 1GB RAM + 2GB Swap)\`\n• **Region:** \`us-east-1 (N. Virginia)\`\n• **CPU Utilization:** \`3.8%\`\n• **RAM Allocated:** \`284 MB / 988 MB\`\n• **Swap In-Use:** \`64 MB / 2048 MB\`\n• **Disk Storage:** \`4.8 GB / 20.0 GB (24%)\`\n• **Systemd Service:** \`dcxuserbot.service (active / running)\``,
         });
+      } else if (lower.startsWith('.aidm') || lower.startsWith('!aidm')) {
+        addMessage({
+          sender: 'bot',
+          senderName: 'DcXuserbot Groq AI Intelligence',
+          avatarText: '⚡',
+          text: `⚡ **Groq AI Intelligence** (\`openai/gpt-oss-120b\`)\n━━━━━━━━━━━━━━━━━━━━━━\n👤 **Analyzed User:** [Alex Developer](tg://user?id=184920412) (@alex_dev)\n━━━━━━━━━━━━━━━━━━━━━━\n👋 Greetings Alex! Based on your bio *"Building distributed systems & high-throughput Telegram microservices"*, I've aligned our chat parameters. How can I assist you with your architecture or API workflows today?`,
+        });
+      } else if (lower.startsWith('.speedtest') || lower.startsWith('!speedtest')) {
+        addMessage({
+          sender: 'bot',
+          senderName: 'DcXuserbot Speedtest',
+          avatarText: '🚀',
+          text: `🚀 **AWS EC2 Speedtest Benchmark Results**\n━━━━━━━━━━━━━━━━━━━━━━\n📍 **Node Server:** \`Frankfurt Cloud Node, Germany\`\n🏓 **Ping:** \`1.42 ms\`\n📥 **Download:** \`942.15 Mbit/s\`\n📤 **Upload:** \`890.64 Mbit/s\`\n━━━━━━━━━━━━━━━━━━━━━━\n🛰️ **Cloud Node:** \`AWS EC2 (Frankfurt / Global 10Gbps Fiber)\``,
+        });
+      } else if (lower.startsWith('.join') || lower.startsWith('!join')) {
+        const target = trimmed.replace(/^[.!](join)\s*/i, '') || '@telegram';
+        addMessage({
+          sender: 'bot',
+          senderName: 'DcXuserbot Channel Suite',
+          avatarText: '🔗',
+          text: `✅ **Successfully joined:** **Official Telegram Channel** (\`${target}\`)\n• Type: Public Channel\n• Anti-FloodWait Protection: Active`,
+        });
       } else if (lower === '.quote') {
         addMessage({
           sender: 'bot',
@@ -353,11 +375,13 @@ export const TelegramSimulator: React.FC = () => {
   const quickCommands = [
     { cmd: '.update', label: '.update (GitHub Sync)', icon: RefreshCw },
     { cmd: '.alive', label: '.alive (Interactive Buttons)', icon: Zap },
+    { cmd: '.aidm', label: '.aidm (Groq AI Profile)', icon: Sparkles },
+    { cmd: '.speedtest', label: '.speedtest (Frankfurt)', icon: Server },
+    { cmd: '.join @telegram', label: '.join (@channel / link)', icon: Info },
     { cmd: '.help', label: '.help (Codex Menu)', icon: Info },
     { cmd: '.ping', label: '.ping (Latency)', icon: RefreshCw },
     { cmd: '.ec2 status', label: '.ec2 status (AWS Metrics)', icon: Server },
     { cmd: '.pmpermit', label: '.pmpermit (Anti-Spam Shield)', icon: Shield },
-    { cmd: '.ai Explain AWS EC2 benefits for userbot', label: '.ai (Gemini)', icon: Sparkles },
   ];
 
   return (

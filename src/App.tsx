@@ -22,6 +22,7 @@ export default function App() {
     commandHandler: '.',
     aliveName: 'DcX Commander',
     geminiApiKey: '',
+    groqApiKey: '',
     awsRegion: 'us-east-1',
     ec2InstanceType: 't3.micro',
   });
