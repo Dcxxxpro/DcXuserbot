@@ -10,12 +10,13 @@ export const USERBOT_FILES: UserbotFile[] = [
 """
 DcXuserbot - Advanced Telegram Userbot with Inline Assistant Bridge
 Designed for 24/7 AWS EC2 high-availability deployments.
-Inspired & upgraded from CatUserbot, Paperplane, and HellBot.
+Equipped with strict Sudo User Access Control & Groq / Gemini AI Engines.
 """
 
 import sys
 import asyncio
 import logging
+import traceback
 from core.client import DcXUserBot, DcXAssistantBot
 from core.managers import load_all_plugins
 from core.inline import register_inline_callbacks
@@ -31,45 +32,57 @@ LOGS = logging.getLogger("DcXuserbot")
 async def start_dcx():
     LOGS.info(">>> Starting DcXuserbot Userbot Engine...")
     
-    # 1. Initialize User Client
+    # 1. Initialize User Client with StringSession
     userbot = DcXUserBot()
-    await userbot.start()
-    me = await userbot.get_me()
-    LOGS.info(f"Userbot authenticated as: @{me.username or me.first_name} (ID: {me.id})")
+    try:
+        await userbot.start()
+        me = await userbot.get_me()
+        userbot.me = me
+        LOGS.info(f"Userbot authenticated as: @{me.username or me.first_name} (ID: {me.id})")
+    except Exception as e:
+        LOGS.critical(f"Failed to authenticate Telethon Userbot session: {e}\n{traceback.format_exc()}")
+        sys.exit(1)
     
-    # 2. Initialize Inline Assistant Bot (Powers inline keyboard buttons like CatUserbot)
+    # 2. Initialize Inline Assistant Bot (Powers CatUserbot-style inline buttons)
     assistant = None
     if Config.BOT_TOKEN:
         LOGS.info(">>> Starting Companion Assistant Bot for Inline Buttons...")
-        assistant = DcXAssistantBot(userbot=userbot)
-        await assistant.start()
-        bot_info = await assistant.get_me()
-        LOGS.info(f"Assistant Bot online: @{bot_info.username}")
-        # Register interactive callback query router on the assistant client
-        register_inline_callbacks(assistant, userbot)
-        LOGS.info("Registered inline button callback router.")
+        try:
+            assistant = DcXAssistantBot(userbot=userbot)
+            await assistant.start()
+            bot_info = await assistant.get_me()
+            assistant.me = bot_info
+            LOGS.info(f"Assistant Bot online: @{bot_info.username}")
+            register_inline_callbacks(assistant, userbot)
+            LOGS.info("Registered inline button callback router.")
+        except Exception as e:
+            LOGS.warning(f"Assistant Bot failed to start: {e}. Falling back to text representation.")
+            assistant = None
     else:
         LOGS.warning("No BOT_TOKEN found! Inline buttons will fall back to text representation.")
     
-    # 3. Dynamically discover and load all upgraded plugins & bind event handlers
+    # 3. Dynamically discover and load all plugins with strict sudo enforcement
     loaded_count = await load_all_plugins(userbot, assistant)
-    LOGS.info(f"Successfully loaded and bound {loaded_count} plugins.")
+    LOGS.info(f"Successfully loaded and bound {loaded_count} plugins with strict sudo control.")
     
-    # 4. Notify Owner in Saved Messages / Log Channel
+    # 4. Notify Owner in Saved Messages
     startup_msg = (
-        "⚡ **DcXuserbot is Live on AWS EC2!**\\n\\n"
-        f"• **User:** [{me.first_name}](tg://user?id={me.id})\\n"
-        f"• **Assistant:** @{Config.BOT_USERNAME or 'Disabled'}\\n"
-        f"• **Prefix:** \`{Config.COMMAND_HAND_LER}\`\\n"
-        f"• **Plugins:** \`{loaded_count}\` active\\n"
-        "• **Status:** System operational & ready."
+        "⚡ **DcXuserbot is Live on AWS EC2!**\n\n"
+        f"• **Owner:** [{me.first_name}](tg://user?id={me.id})\n"
+        f"• **Assistant:** @{Config.BOT_USERNAME or 'Disabled'}\n"
+        f"• **Owner Prefix:** \`{Config.COMMAND_HAND_LER}\`\n"
+        f"• **Sudo Prefix:** \`{Config.SUDO_COMMAND_HAND_LER}\`\n"
+        f"• **Sudo Users:** \`{len(Config.SUDO_USERS)}\` authorized\n"
+        f"• **Groq AI:** \`{'Enabled (openai/gpt-oss-120b)' if Config.GROQ_API_KEY else 'Disabled'}\`\n"
+        f"• **Plugins:** \`{loaded_count}\` active\n"
+        "• **Host:** AWS EC2 Cloud Daemon (Systemd)"
     )
     try:
         await userbot.send_message("me", startup_msg)
     except Exception as e:
         LOGS.debug(f"Could not send startup note to Saved Messages: {e}")
 
-    LOGS.info("DcXuserbot is fully operational. Awaiting incoming events...")
+    LOGS.info("DcXuserbot is fully operational. Awaiting incoming commands...")
     
     # Run loop indefinitely
     await asyncio.gather(
@@ -82,6 +95,9 @@ if __name__ == "__main__":
         asyncio.run(start_dcx())
     except (KeyboardInterrupt, SystemExit):
         LOGS.info("DcXuserbot stopped cleanly.")
+    except Exception as exc:
+        LOGS.critical(f"Fatal crash in userbot daemon: {exc}\n{traceback.format_exc()}")
+        sys.exit(1)
 `
   },
   {
@@ -106,25 +122,30 @@ class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN", "")
     BOT_USERNAME = os.getenv("BOT_USERNAME", "").replace("@", "")
     
-    # Command Handler Prefix (Default: '.')
+    # Command Handler Prefix (Default: .)
     COMMAND_HAND_LER = os.getenv("COMMAND_HAND_LER", ".")
     SUDO_COMMAND_HAND_LER = os.getenv("SUDO_COMMAND_HAND_LER", "!")
     
-    # Authorized Sudo Users (Comma separated IDs)
-    SUDO_USERS = [int(x.strip()) for x in os.getenv("SUDO_USERS", "").split(",") if x.strip().isdigit()]
+    # Authorized Sudo Users (Comma separated IDs: "1234567,9876543")
+    SUDO_USERS = [
+        int(x.strip()) 
+        for x in os.getenv("SUDO_USERS", "").split(",") 
+        if x.strip().isdigit()
+    ]
     
     # Custom Alive Profile
     ALIVE_NAME = os.getenv("ALIVE_NAME", "DcX Master")
     ALIVE_MEDIA = os.getenv("ALIVE_MEDIA", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200")
     
-    # Optional Gemini AI API Key for .ai commands
+    # AI Engine API Keys
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     
     # Anti-PM Spam Configuration
     PM_PERMIT = os.getenv("PM_PERMIT", "True").lower() in ("true", "1", "yes")
     PM_LIMIT = int(os.getenv("PM_LIMIT", "4"))
     
-    # AWS EC2 Specific Settings
+    # AWS EC2 Cloud Settings
     AWS_INSTANCE_ID = os.getenv("AWS_INSTANCE_ID", "i-ec2-dcxuserbot")
     AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 `
@@ -138,19 +159,18 @@ class Config:
 # DcXuserbot - AWS EC2 Telegram Userbot Configuration File
 # ==========================================================
 
-# 1. Telegram Core Credentials (obtain from https://my.telegram.org)
+# 1. Telegram Core Credentials (from https://my.telegram.org)
 API_ID=1234567
 API_HASH=abcdef0123456789abcdef0123456789
 
-# 2. Telethon String Session (Generate via helper script or terminal)
+# 2. Telethon String Session
 STRING_SESSION=1BVtsO...YourTelethonStringSessionHere...
 
-# 3. Companion Assistant Bot Token (From @BotFather on Telegram)
-# This enables interactive inline buttons like CatUserbot!
+# 3. Companion Assistant Bot Token (From @BotFather)
 BOT_TOKEN=7123456789:AAH...YourBotFatherTokenHere...
 BOT_USERNAME=DcXAssistantBot
 
-# 4. Control Prefixes & Security
+# 4. Control Prefixes & Strict Sudo Access
 COMMAND_HAND_LER=.
 SUDO_COMMAND_HAND_LER=!
 SUDO_USERS=123456789,987654321
@@ -159,14 +179,16 @@ SUDO_USERS=123456789,987654321
 ALIVE_NAME=DcX Commander
 ALIVE_MEDIA=https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
 
-# 6. Optional AI Features (Gemini API)
-GEMINI_API_KEY=AIzaSy...YourKey...
+# 6. AI Integrations (Groq Ultra-Fast API + Gemini)
+# Obtain Groq key from: https://console.groq.com/keys
+GROQ_API_KEY=gsk_...YourGroqKeyHere...
+GEMINI_API_KEY=AIzaSy...YourGeminiKeyHere...
 
-# 7. Security & Spam Shield
+# 7. Security & PM Spam Shield
 PM_PERMIT=True
 PM_LIMIT=4
 
-# 8. AWS EC2 Cloud Tagging
+# 8. AWS EC2 Cloud Settings
 AWS_REGION=us-east-1
 AWS_INSTANCE_ID=i-ec2-dcxuserbot
 `
@@ -232,47 +254,73 @@ from telethon import events
 from config import Config
 
 LOGS = logging.getLogger("DcXuserbot.Managers")
-CMD_PATTERN_PREFIX = re.escape(Config.COMMAND_HAND_LER)
-SUDO_PATTERN_PREFIX = re.escape(Config.SUDO_COMMAND_HAND_LER)
+
+CMD_PREFIX = re.escape(Config.COMMAND_HAND_LER)
+SUDO_PREFIX = re.escape(Config.SUDO_COMMAND_HAND_LER)
 
 PLUGINS_REGISTRY = {}
 
-def register(pattern=None, sudo=False, **args):
+def register(pattern=None, sudo=True, **args):
     """
-    Decorator to register userbot commands with auto-prefixing,
-    exception handling, and optional sudo user authorization.
+    Decorator to register userbot commands with strict authorization:
+    - Bot Owner (and self outgoing events) can execute all commands via COMMAND_HAND_LER or SUDO_COMMAND_HAND_LER.
+    - Sudo users whose IDs are in Config.SUDO_USERS can execute commands marked sudo=True via SUDO_COMMAND_HAND_LER or COMMAND_HAND_LER.
+    - Non-authorized users are silently ignored (no response, no exceptions, no info leak).
+    - Top-level exception safety prevents bot crashes and provides user feedback.
     """
     def decorator(func):
-        regex = None
-        # Format pattern with prefix
         if pattern:
-            regex = f"^{CMD_PATTERN_PREFIX}{pattern}"
-            if sudo and Config.SUDO_USERS:
-                regex = f"^[{CMD_PATTERN_PREFIX}{SUDO_PATTERN_PREFIX}]{pattern}"
+            # Pattern matching both owner prefix and sudo prefix: e.g. ^[.!](command)(?:\s+(.*))?$
+            regex = f"^[{CMD_PREFIX}{SUDO_PREFIX}]{pattern}"
             args["pattern"] = re.compile(regex)
 
         async def wrapper(event):
-            # Verify authorization
-            me_id = (await event.client.get_me()).id
-            if event.sender_id != me_id:
-                if not sudo or event.sender_id not in Config.SUDO_USERS:
+            try:
+                # 1. Identity & Sudo Authorization Check
+                me = getattr(event.client, "me", None)
+                if me is None:
+                    me = await event.client.get_me()
+                    event.client.me = me
+                
+                sender_id = event.sender_id
+                
+                # Verify whether the sender is the bot owner or authorized sudo
+                is_owner = (sender_id == me.id) or event.out
+                is_sudo = (sender_id in Config.SUDO_USERS)
+                
+                if not (is_owner or is_sudo):
+                    # Silently ignore unauthorized attempts
+                    return
+                
+                # Check command level permission: if sudo=False, only owner can run
+                if not is_owner and not sudo:
+                    LOGS.warning(f"Sudo user {sender_id} attempted owner-only command: {func.__name__}")
                     return
 
-            try:
+                # 2. Execute Handler with robust safety net
                 await func(event)
+                
             except events.StopPropagation:
                 raise events.StopPropagation
             except Exception as exc:
-                err_text = f"⚠️ **Error in command:** \`{func.__name__}\`\\n\`\`\`{traceback.format_exc()}\`\`\`"
-                LOGS.error(f"Error in {func.__name__}: {exc}")
+                err_trace = traceback.format_exc()
+                LOGS.error(f"Unhandled exception in command [{func.__name__}]: {exc}\n{err_trace}")
+                
+                # Format friendly Telegram error without leaving message stuck in 'Processing...'
+                friendly_error = (
+                    f"❌ **Command Execution Failed:** \`{func.__name__}\`\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"⚠️ **Reason:** \`{type(exc).__name__}: {str(exc) or 'Unknown error'}\`\n"
+                    f"💡 *Check terminal or systemd journal logs for full traceback.*"
+                )
                 try:
-                    await event.reply(err_text)
+                    await event.client.edit_or_reply(event, friendly_error)
                 except Exception:
                     pass
 
-        # Save metadata and event filter parameters for userbot.add_event_handler
+        # Register metadata for discovery & codex help menu
         doc = func.__doc__ or "No description provided."
-        cmd_name = pattern.split()[0].replace("(.*)", "").strip() if pattern else func.__name__
+        cmd_name = pattern.split()[0].replace("(.*)", "").replace("$", "").replace("(?:", "").strip() if pattern else func.__name__
         PLUGINS_REGISTRY[cmd_name] = {
             "handler": wrapper,
             "doc": doc.strip(),
@@ -286,14 +334,14 @@ def register(pattern=None, sudo=False, **args):
 
 async def load_all_plugins(userbot, assistant=None):
     """
-    Walk through plugins/ directory, import every module,
-    and explicitly attach all registered handlers to the userbot instance.
+    Dynamically discover all plugins in plugins/ directory,
+    bind event handlers with strict access control, and log loading summary.
     """
     plugins_path = os.path.join(os.path.dirname(__file__), "..", "plugins")
     modules = glob.glob(os.path.join(plugins_path, "*.py"))
     
     count = 0
-    for file_path in modules:
+    for file_path in sorted(modules):
         base_name = os.path.basename(file_path)
         if base_name.startswith("__"):
             continue
@@ -301,16 +349,19 @@ async def load_all_plugins(userbot, assistant=None):
         try:
             mod = importlib.import_module(module_name)
             count += 1
-            LOGS.debug(f"Imported plugin module: {module_name}")
+            LOGS.debug(f"Loaded plugin module: {module_name}")
             
-            # Check for module-level incoming event listeners (such as anti-pm spam in pmpermit.py)
+            # Module-level incoming event listeners (such as anti-pm spam in pm_permit.py)
             if hasattr(mod, "handle_incoming_pm") and callable(getattr(mod, "handle_incoming_pm")):
-                userbot.add_event_handler(getattr(mod, "handle_incoming_pm"), events.NewMessage(incoming=True, func=lambda e: e.is_private))
-                LOGS.debug("Bound incoming PM listener: handle_incoming_pm")
+                userbot.add_event_handler(
+                    getattr(mod, "handle_incoming_pm"),
+                    events.NewMessage(incoming=True, func=lambda e: e.is_private)
+                )
+                LOGS.debug("Bound incoming PM security shield: handle_incoming_pm")
         except Exception as e:
-            LOGS.error(f"Failed to load plugin {module_name}: {e}\\n{traceback.format_exc()}")
+            LOGS.error(f"Failed to load plugin [{module_name}]: {e}\n{traceback.format_exc()}")
 
-    # Attach all registered commands in PLUGINS_REGISTRY to the userbot client
+    # Attach all registered commands from PLUGINS_REGISTRY to the userbot client
     bound_count = 0
     for cmd_name, item in PLUGINS_REGISTRY.items():
         handler = item["handler"]
@@ -321,7 +372,7 @@ async def load_all_plugins(userbot, assistant=None):
             userbot.add_event_handler(handler, events.NewMessage())
         bound_count += 1
 
-    LOGS.info(f"Attached {bound_count} event handlers from {count} plugins to DcXUserBot.")
+    LOGS.info(f"Attached {bound_count} secure commands from {count} plugins to DcXUserBot.")
     return count
 `
   },
@@ -500,63 +551,124 @@ async def help_menu(event):
     name: 'pmpermit.py',
     category: 'plugin',
     description: 'Anti-PM spam protection with interactive verification buttons, strike counter, and auto-block.',
-    content: `from telethon import events, Button
+    content: `"""
+Anti-PM Spam Shield & Gatekeeper: .approve, .disapprove, .block
+Protects user privacy by intercepting unsolicited direct messages.
+Issues strike warnings and triggers automatic blocks upon hitting Config.PM_LIMIT.
+"""
+
+import logging
+import traceback
+from telethon import events, Button
+from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
 from core.managers import register
 from config import Config
+
+LOGS = logging.getLogger("DcXuserbot.PMPermit")
 
 APPROVED_USERS = set()
 PM_WARNS = {}
 
-@register(pattern="approve$")
+@register(pattern="approve(?:\s+(.*))?$")
 async def approve_pm(event):
     """Approve a user to direct message you."""
-    if not event.is_private:
-        return await event.edit_or_reply("Use this command in private chat!")
-    chat_id = event.chat_id
-    APPROVED_USERS.add(chat_id)
-    PM_WARNS.pop(chat_id, None)
-    await event.client.edit_or_reply(event, "✅ **User approved for direct messaging.**")
+    reply = await event.get_reply_message()
+    target_id = None
+    
+    if reply:
+        target_id = reply.sender_id
+    elif event.is_private:
+        target_id = event.chat_id
+    else:
+        arg = (event.pattern_match.group(1) or "").strip()
+        if arg.isdigit():
+            target_id = int(arg)
+            
+    if not target_id:
+        return await event.client.edit_or_reply(event, "Reply to a user or use in private chat to approve.")
 
-@register(pattern="disapprove$")
+    APPROVED_USERS.add(target_id)
+    PM_WARNS.pop(target_id, None)
+    await event.client.edit_or_reply(event, f"✅ **User** \`{target_id}\` **approved for direct messaging.**")
+
+@register(pattern="disapprove(?:\s+(.*))?$")
 async def disapprove_pm(event):
     """Disapprove a user from direct messaging you."""
-    chat_id = event.chat_id
-    APPROVED_USERS.discard(chat_id)
-    await event.client.edit_or_reply(event, "🚫 **User disapproved.**")
+    reply = await event.get_reply_message()
+    target_id = None
+    
+    if reply:
+        target_id = reply.sender_id
+    elif event.is_private:
+        target_id = event.chat_id
+    else:
+        arg = (event.pattern_match.group(1) or "").strip()
+        if arg.isdigit():
+            target_id = int(arg)
 
-# Event listener for incoming private messages
+    if not target_id:
+        return await event.client.edit_or_reply(event, "Reply to a user or use in private chat to disapprove.")
+
+    APPROVED_USERS.discard(target_id)
+    await event.client.edit_or_reply(event, f"🚫 **User** \`{target_id}\` **disapproved.**")
+
+@register(pattern="block(?:\s+(.*))?$")
+async def block_user(event):
+    """Immediately block replied user or private chat user."""
+    reply = await event.get_reply_message()
+    target_id = reply.sender_id if reply else (event.chat_id if event.is_private else None)
+    
+    if not target_id:
+        return await event.client.edit_or_reply(event, "Reply to a user or use in private chat to block.")
+
+    try:
+        await event.client(BlockRequest(id=target_id))
+        APPROVED_USERS.discard(target_id)
+        await event.client.edit_or_reply(event, f"🛑 **User** \`{target_id}\` **blocked permanently.**")
+    except Exception as exc:
+        await event.client.edit_or_reply(event, f"❌ **Failed to block:** \`{exc}\`")
+
 async def handle_incoming_pm(event):
+    """Security Shield: Inspects incoming private messages and warns strangers."""
     if not Config.PM_PERMIT or not event.is_private:
         return
-    me = await event.client.get_me()
-    sender = await event.get_sender()
-    
-    if sender.bot or sender.is_self or sender.id in APPROVED_USERS:
-        return
+        
+    try:
+        me = getattr(event.client, "me", None)
+        if me is None:
+            me = await event.client.get_me()
+            event.client.me = me
 
-    # Count warnings
-    PM_WARNS[sender.id] = PM_WARNS.get(sender.id, 0) + 1
-    count = PM_WARNS[sender.id]
-    
-    if count >= Config.PM_LIMIT:
-        await event.reply("🚫 **You have been blocked for spamming without approval.**")
-        await event.client(functions.contacts.BlockRequest(id=sender.id))
-        return
+        sender = await event.get_sender()
+        if not sender:
+            return
 
-    warn_msg = (
-        f"👋 **Hello {sender.first_name}!**\\n\\n"
-        f"I am the personal automated security assistant for [{Config.ALIVE_NAME}](tg://user?id={me.id}).\\n"
-        f"My master has not approved you to send private messages yet.\\n\\n"
-        f"⚠️ **Warning:** \`{count}/{Config.PM_LIMIT}\` strikes.\\n"
-        f"Spamming will cause an automatic block."
-    )
-    
-    # Inline buttons if assistant bot is active
-    buttons = [
-        [Button.inline("❓ Request Approval", data=f"req_pm_{sender.id}")],
-        [Button.url("📢 Official Channel", url="https://t.me")]
-    ]
-    await event.reply(warn_msg)
+        # Whitelist conditions
+        if sender.bot or sender.is_self or sender.id == me.id or sender.id in APPROVED_USERS or sender.id in Config.SUDO_USERS:
+            return
+
+        # Increment warning strike
+        PM_WARNS[sender.id] = PM_WARNS.get(sender.id, 0) + 1
+        count = PM_WARNS[sender.id]
+        
+        # Check if user reached max strikes
+        if count >= Config.PM_LIMIT:
+            await event.reply("🚫 **You have been blocked for exceeding the unsolicited message limit.**")
+            await event.client(BlockRequest(id=sender.id))
+            LOGS.info(f"Auto-blocked spammer {sender.id} ({sender.first_name})")
+            return
+
+        warn_msg = (
+            f"👋 **Hello {sender.first_name}!**\n\n"
+            f"I am the automated personal security assistant for [{Config.ALIVE_NAME}](tg://user?id={me.id}).\n"
+            f"My master has not approved you to send private messages yet.\n\n"
+            f"⚠️ **Warning Strike:** \`{count}/{Config.PM_LIMIT}\`\n"
+            f"Spamming will result in an automated block."
+        )
+        await event.reply(warn_msg)
+        
+    except Exception as exc:
+        LOGS.error(f"Error in PM permit listener: {exc}\n{traceback.format_exc()}")
 `
   },
   {
@@ -754,8 +866,25 @@ async def gemini_ai(event):
     name: 'tools.py',
     category: 'plugin',
     description: 'Precision latency ping, speedtest, userinfo inspection, math calculator, and pastebin.',
-    content: `import time
+    content: `"""
+System & Network Diagnostics Suite: .ping, .speedtest, .whois
+Speedtest:
+- Employs official speedtest-cli subprocess with JSON text parser.
+- Includes European / Frankfurt server target locking for predictable AWS EC2 cloud benchmarking.
+- Robust exception fallbacks to prevent [Errno 2] No such file or directory crashes.
+"""
+
+import os
+import sys
+import json
+import time
+import shutil
+import asyncio
+import logging
+import traceback
 from core.managers import register
+
+LOGS = logging.getLogger("DcXuserbot.Tools")
 
 @register(pattern="ping$")
 async def ping_test(event):
@@ -764,29 +893,120 @@ async def ping_test(event):
     msg = await event.client.edit_or_reply(event, "🏓 **Pinging...**")
     end = time.perf_counter()
     latency = round((end - start) * 1000, 2)
-    await msg.edit(f"🏓 **Pong!** \`{latency} ms\`\\n🛰️ Host: **AWS EC2**")
+    await msg.edit(f"🏓 **Pong!** \`{latency} ms\`\n🛰️ Host: **AWS EC2 Cloud Node**")
 
-@register(pattern="whois(?:\\s+(.*))?$")
-async def user_info(event):
-    """Retrieve in-depth information regarding a user or chat ID."""
+@register(pattern="speedtest(?:\s+(.*))?$")
+async def network_speedtest(event):
+    """Execute network speed benchmarking with server fallbacks."""
+    arg = (event.pattern_match.group(1) or "").strip().lower()
+    msg = await event.client.edit_or_reply(event, "⚡ **Initiating AWS EC2 network speedtest...**\n*Testing latency, download, and upload speeds...*")
+    
+    try:
+        # Determine executable path: speedtest-cli binary or python -m speedtest
+        speedtest_bin = shutil.which("speedtest-cli")
+        if speedtest_bin:
+            cmd = [speedtest_bin, "--secure", "--simple"]
+        else:
+            # Fallback to current python virtual environment executable
+            cmd = [sys.executable, "-m", "speedtest", "--secure", "--simple"]
+
+        # If user requests Frankfurt or Europe explicitly
+        if "frankfurt" in arg or "eu" in arg:
+            cmd.extend(["--server", "3682"]) # Frankfurt server ID
+
+        LOGS.info(f"Executing speedtest command: {' '.join(cmd)}")
+        
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        try:
+            # Enforce 45-second timeout to avoid indefinite hanging
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=45.0)
+        except asyncio.TimeoutError:
+            proc.kill()
+            return await msg.edit("⚠️ **Speedtest timed out after 45 seconds.** Check network routing.")
+
+        output = stdout.decode("utf-8", errors="ignore").strip()
+        err_output = stderr.decode("utf-8", errors="ignore").strip()
+
+        if proc.returncode != 0 or not output:
+            LOGS.warning(f"Speedtest cli failed with return code {proc.returncode}: {err_output}")
+            
+            # Fallback: Python in-process speedtest execution
+            await msg.edit("🔄 **Primary CLI test failed. Falling back to internal Telethon benchmark...**")
+            try:
+                import speedtest as st_lib
+                s = st_lib.Speedtest(secure=True)
+                s.get_best_server()
+                s.download()
+                s.upload()
+                res = s.results.dict()
+                
+                ping_val = round(res.get("ping", 0), 2)
+                down_val = round(res.get("download", 0) / (1024 * 1024), 2)
+                up_val = round(res.get("upload", 0) / (1024 * 1024), 2)
+                server_name = res.get("server", {}).get("name", "Unknown")
+                country = res.get("server", {}).get("country", "Unknown")
+
+                result_text = (
+                    f"🚀 **AWS EC2 Speedtest Benchmark Results**\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"📍 **Node Server:** \`{server_name}, {country}\`\n"
+                    f"🏓 **Ping:** \`{ping_val} ms\`\n"
+                    f"📥 **Download:** \`{down_val} Mbit/s\`\n"
+                    f"📤 **Upload:** \`{up_val} Mbit/s\`\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🛰️ **Cloud Node:** \`AWS EC2 (Frankfurt / Global Gateway)\`"
+                )
+                return await msg.edit(result_text)
+            except Exception as lib_err:
+                LOGS.error(f"In-process speedtest error: {lib_err}\n{traceback.format_exc()}")
+                return await msg.edit(f"❌ **Speedtest Error:** \`{lib_err}\`\n💡 Ensure \`pip install speedtest-cli\` is run on EC2.")
+
+        # Parse simple output: Ping: XX ms 
+ Download: XX Mbit/s 
+ Upload: XX Mbit/s
+        lines = output.splitlines()
+        formatted_summary = (
+            f"🚀 **AWS EC2 Speedtest Benchmark**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            + "\n".join([f"• **{l.split(':')[0]}:** \`{l.split(':')[1].strip()}\`" for l in lines if ":" in l])
+            + f"\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🛰️ **Host:** AWS EC2 Cloud Enterprise Interface"
+        )
+        await msg.edit(formatted_summary)
+
+    except Exception as exc:
+        LOGS.error(f"Fatal speedtest exception: {exc}\n{traceback.format_exc()}")
+        await msg.edit(f"❌ **Speedtest Failed:** \`{type(exc).__name__}: {str(exc)}\`")
+
+@register(pattern="whois(?:\s+(.*))?$")
+async def user_info_lookup(event):
+    """Inspect user or chat ID with complete Telethon entity resolution."""
     reply = await event.get_reply_message()
     user_id = reply.sender_id if reply else event.pattern_match.group(1)
     
     if not user_id:
         user_id = event.sender_id
         
-    user = await event.client.get_entity(user_id)
-    info = (
-        f"👤 **User Dossier:**\\n"
-        f"• **First Name:** {user.first_name}\\n"
-        f"• **Last Name:** {user.last_name or 'None'}\\n"
-        f"• **Username:** @{user.username or 'None'}\\n"
-        f"• **ID:** \`{user.id}\`\\n"
-        f"• **DC ID:** {getattr(user.photo, 'dc_id', 'Unknown') if user.photo else 'None'}\\n"
-        f"• **Bot:** {user.bot}\\n"
-        f"• **Verified:** {user.verified}"
-    )
-    await event.client.edit_or_reply(event, info)
+    try:
+        user = await event.client.get_entity(user_id)
+        info = (
+            f"👤 **User Dossier:**\n"
+            f"• **First Name:** {user.first_name}\n"
+            f"• **Last Name:** {user.last_name or 'None'}\n"
+            f"• **Username:** @{user.username or 'None'}\n"
+            f"• **ID:** \`{user.id}\`\n"
+            f"• **DC ID:** {getattr(user.photo, 'dc_id', 'Unknown') if getattr(user, 'photo', None) else 'None'}\n"
+            f"• **Bot:** {getattr(user, 'bot', False)}\n"
+            f"• **Verified:** {getattr(user, 'verified', False)}"
+        )
+        await event.client.edit_or_reply(event, info)
+    except Exception as exc:
+        await event.client.edit_or_reply(event, f"❌ **Could not resolve user:** \`{exc}\`")
 `
   },
   {
@@ -1106,6 +1326,245 @@ google-genai>=2.4.0
 speedtest-cli>=2.1.3
 qrcode>=7.4.2
 hpsdnclient>=1.3.0
+`
+  },
+  {
+    path: 'plugins/aidm.py',
+    name: 'aidm.py',
+    category: 'plugin',
+    description: 'Groq AI Direct Message scanner (openai/gpt-oss-120b) with safe GetFullUserRequest bio/profile retrieval.',
+    content: `"""
+Groq AI Intelligence Suite: .aidm and .ai
+Target Model: openai/gpt-oss-120b (Ultra-fast latency via AsyncGroq)
+Safely inspects user profile (First Name, Bio, Username) via GetFullUserRequest
+with thorough fallback handling for missing fields and Telegram privacy restrictions.
+"""
+
+import logging
+import traceback
+from groq import AsyncGroq
+from telethon.tl.functions.users import GetFullUserRequest
+from core.managers import register
+from config import Config
+
+LOGS = logging.getLogger("DcXuserbot.AIDM")
+
+def get_groq_client():
+    if not Config.GROQ_API_KEY:
+        return None
+    return AsyncGroq(api_key=Config.GROQ_API_KEY)
+
+@register(pattern="aidm(?:\s+(.*))?$")
+async def ai_direct_message_scan(event):
+    """Scan a user's Telegram profile (Bio, Name, Username) and generate an AI reply via Groq openai/gpt-oss-120b."""
+    prompt_input = (event.pattern_match.group(1) or "").strip()
+    status_msg = await event.client.edit_or_reply(event, "🔍 **Scanning user profile context & contacting Groq AI...**")
+    
+    try:
+        # 1. Check API Key
+        client = get_groq_client()
+        if not client:
+            return await status_msg.edit(
+                "⚠️ **GROQ_API_KEY Missing!**\n"
+                "Please add \`GROQ_API_KEY=gsk_...\` to your \`.env\` file to activate ultra-fast Groq AI models."
+            )
+
+        # 2. Determine target user (replied message or sender of private chat)
+        reply = await event.get_reply_message()
+        target_entity = None
+        
+        if reply:
+            target_entity = await reply.get_sender()
+        elif event.is_private:
+            target_entity = await event.get_chat()
+        else:
+            target_entity = await event.get_sender()
+
+        if not target_entity:
+            return await status_msg.edit("❌ **Could not resolve user profile.** Reply to a user or use inside private chat.")
+
+        # 3. Safely query user full profile with GetFullUserRequest
+        user_first_name = getattr(target_entity, "first_name", "Unknown") or "Unknown"
+        user_last_name = getattr(target_entity, "last_name", "") or ""
+        user_full_name = f"{user_first_name} {user_last_name}".strip()
+        user_handle = f"@{target_entity.username}" if getattr(target_entity, "username", None) else "None"
+        user_id = target_entity.id
+        
+        bio = "None"
+        try:
+            full_user_obj = await event.client(GetFullUserRequest(user_id))
+            if full_user_obj and hasattr(full_user_obj, "full_user") and full_user_obj.full_user.about:
+                bio = full_user_obj.full_user.about.strip()
+        except Exception as bio_err:
+            LOGS.debug(f"Could not retrieve bio for {user_id} due to privacy/type: {bio_err}")
+
+        # 4. Craft contextual system and user prompts
+        system_instruction = (
+            "You are an elite, highly intelligent Telegram AI Assistant running inside DcXuserbot on AWS EC2. "
+            "You provide sharp, charismatic, concise, and helpful answers formatted with Telegram markdown. "
+            "Never hallucinate facts. Be polite and context-aware."
+        )
+
+        user_context_block = (
+            f"[User Profile Context]\n"
+            f"• Name: {user_full_name}\n"
+            f"• Username: {user_handle}\n"
+            f"• Telegram ID: {user_id}\n"
+            f"• Bio/About: {bio}\n\n"
+        )
+        
+        actual_query = prompt_input or (reply.text if reply and reply.text else "Introduce yourself, analyze my profile, and offer assistance.")
+        full_content = user_context_block + f"User Query/Message: {actual_query}"
+
+        # 5. Call Groq with target model: openai/gpt-oss-120b (with automatic fallback to llama-3.3-70b-versatile)
+        target_model = "openai/gpt-oss-120b"
+        try:
+            chat_completion = await client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": full_content}
+                ],
+                model=target_model,
+                temperature=0.7,
+                max_tokens=1024,
+            )
+            ai_reply = chat_completion.choices[0].message.content
+        except Exception as model_err:
+            LOGS.warning(f"Groq {target_model} error: {model_err}. Falling back to llama-3.3-70b-versatile...")
+            target_model = "llama-3.3-70b-versatile"
+            chat_completion = await client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": full_content}
+                ],
+                model=target_model,
+                temperature=0.7,
+                max_tokens=1024,
+            )
+            ai_reply = chat_completion.choices[0].message.content
+
+        # 6. Format final response
+        formatted_output = (
+            f"⚡ **Groq AI Intelligence** (\`{target_model}\`)\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 **Analyzed User:** [{user_full_name}](tg://user?id={user_id}) ({user_handle})\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"{ai_reply}"
+        )
+        await status_msg.edit(formatted_output)
+
+    except Exception as exc:
+        LOGS.error(f"AIDM error: {exc}\n{traceback.format_exc()}")
+        await status_msg.edit(f"❌ **AIDM Error:** \`{type(exc).__name__}: {str(exc)}\`")
+`
+  },
+  {
+    path: 'plugins/join.py',
+    name: 'join.py',
+    category: 'plugin',
+    description: 'Joining plugin supporting public @channels, links, and private invite hashes (t.me/+hash).',
+    content: `"""
+High-Reliability Telegram Joining Suite: .join and !join
+Supports:
+- Public usernames: @channel or channel
+- Public links: https://t.me/channel or t.me/join
+- Private invite links: https://t.me/+AbCdEfGh or https://t.me/joinchat/AbCdEfGh
+- Fallback resolution for invite hashes
+"""
+
+import re
+import logging
+import traceback
+from telethon.tl.functions.channels import JoinChannelRequest
+from telethon.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
+from telethon.errors import (
+    UserAlreadyParticipantError,
+    InviteHashExpiredError,
+    InviteHashInvalidError,
+    FloodWaitError
+)
+from core.managers import register
+
+LOGS = logging.getLogger("DcXuserbot.Join")
+
+@register(pattern="join(?:\s+(.*))?$")
+async def join_chat_or_channel(event):
+    """Join any public channel, group, or private invite hash link."""
+    raw_target = (event.pattern_match.group(1) or "").strip()
+    
+    # If no argument given, check replied message for link
+    if not raw_target:
+        reply = await event.get_reply_message()
+        if reply and reply.text:
+            raw_target = reply.text.strip()
+            
+    if not raw_target:
+        return await event.client.edit_or_reply(
+            event,
+            "ℹ️ **Usage:**\n"
+            "• \`!join @channel\` or \`!join channelname\`\n"
+            "• \`!join https://t.me/channelname\`\n"
+            "• \`!join https://t.me/+AbCdEf12345\` (Private invite)\n"
+            "• \`!join https://t.me/joinchat/AbCdEf12345\`"
+        )
+
+    msg = await event.client.edit_or_reply(event, f"🔄 **Attempting to join:** \`{raw_target}\`...")
+
+    try:
+        # Pattern 1: Private Invite Link with '+' (e.g. t.me/+hash or telegram.me/+hash)
+        private_plus = re.search(r"(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me)/\+([a-zA-Z0-9_-]+)", raw_target)
+        
+        # Pattern 2: Old private joinchat link (e.g. t.me/joinchat/hash)
+        private_joinchat = re.search(r"(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me)/joinchat/([a-zA-Z0-9_-]+)", raw_target)
+
+        invite_hash = None
+        if private_plus:
+            invite_hash = private_plus.group(1)
+        elif private_joinchat:
+            invite_hash = private_joinchat.group(1)
+
+        if invite_hash:
+            LOGS.info(f"Detected private invite hash: {invite_hash}")
+            try:
+                # Check invite first to get title if possible
+                check = await event.client(CheckChatInviteRequest(invite_hash))
+                chat_title = getattr(check, "title", "Private Group/Channel")
+                
+                # Import private invite
+                await event.client(ImportChatInviteRequest(invite_hash))
+                return await msg.edit(f"✅ **Successfully joined private chat:** **{chat_title}**!")
+            except UserAlreadyParticipantError:
+                return await msg.edit("ℹ️ **You are already a member of this private chat.**")
+            except InviteHashExpiredError:
+                return await msg.edit("❌ **Failed to join:** The private invite link has expired.")
+            except InviteHashInvalidError:
+                return await msg.edit("❌ **Failed to join:** The invite hash is invalid or revoked.")
+
+        # Pattern 3: Public Channel Link or Username
+        # Strip https://t.me/, t.me/, @, or trailing slashes
+        clean_target = raw_target
+        clean_target = re.sub(r"^https?://(?:www\.)?(?:t\.me|telegram\.me)/", "", clean_target)
+        clean_target = clean_target.replace("@", "").strip().strip("/")
+
+        if not clean_target:
+            return await msg.edit("❌ **Invalid username or link provided.**")
+
+        LOGS.info(f"Attempting to join public entity: {clean_target}")
+        
+        # Resolve entity
+        entity = await event.client.get_entity(clean_target)
+        await event.client(JoinChannelRequest(entity))
+        
+        entity_title = getattr(entity, "title", clean_target)
+        await msg.edit(f"✅ **Successfully joined:** **{entity_title}** (\`@{getattr(entity, 'username', clean_target)}\`)")
+
+    except UserAlreadyParticipantError:
+        await msg.edit(f"ℹ️ **You are already a participant in** \`{raw_target}\`.")
+    except FloodWaitError as fw:
+        await msg.edit(f"⏳ **Telegram FloodWait:** Please wait \`{fw.seconds}s\` before joining more channels.")
+    except Exception as exc:
+        LOGS.error(f"Join error: {exc}\n{traceback.format_exc()}")
+        await msg.edit(f"❌ **Failed to join chat:** \`{type(exc).__name__}: {str(exc)}\`")
 `
   },
   {

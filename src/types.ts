@@ -16,6 +16,7 @@ export interface UserbotConfig {
   commandHandler: string;
   aliveName: string;
   geminiApiKey: string;
+  groqApiKey: string;
   awsRegion: string;
   ec2InstanceType: string;
 }

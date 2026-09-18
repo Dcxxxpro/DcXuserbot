@@ -111,6 +111,28 @@ export const PluginCatalog: React.FC = () => {
       ],
     },
     {
+      name: 'Groq AI Profile Intelligence (AIDM)',
+      category: 'ai',
+      sourceInspiration: 'AsyncGroq & Telethon User Profiling',
+      description: 'Scans target user profile (First Name, Bio, Username) via GetFullUserRequest and generates intelligent context-aware responses with openai/gpt-oss-120b.',
+      inlineButtons: false,
+      commands: [
+        { syntax: '.aidm [query]', description: 'Analyze replied user or private chat partner with Groq openai/gpt-oss-120b' },
+        { syntax: '!aidm [query]', description: 'Sudo-executable profile intelligence analysis' },
+      ],
+    },
+    {
+      name: 'Channel & Chat Auto-Joiner',
+      category: 'tools',
+      sourceInspiration: 'Telethon Channel Suite',
+      description: 'Seamlessly joins public usernames (@channel), links, and private invite hashes (t.me/+hash or joinchat/hash) with floodwait and duplication safety.',
+      inlineButtons: false,
+      commands: [
+        { syntax: '.join <target>', description: 'Join @channel, public t.me link, or private invite hash' },
+        { syntax: '!join <target>', description: 'Sudo-executable chat joiner command' },
+      ],
+    },
+    {
       name: 'Global Broadcast & TagAll',
       category: 'broadcast',
       sourceInspiration: 'HellBot & Ultroid',

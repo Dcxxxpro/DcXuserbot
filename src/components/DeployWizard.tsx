@@ -30,6 +30,7 @@ SUDO_USERS=${config.sudoUsers || ''}
 ALIVE_NAME=${config.aliveName || 'DcX Commander'}
 ALIVE_MEDIA=https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
 GEMINI_API_KEY=${config.geminiApiKey || ''}
+GROQ_API_KEY=${config.groqApiKey || ''}
 PM_PERMIT=True
 PM_LIMIT=4
 AWS_REGION=${config.awsRegion || 'us-east-1'}
@@ -301,6 +302,28 @@ sudo journalctl -u dcxuserbot -f
                   value={config.geminiApiKey}
                   onChange={(e) => handleChange('geminiApiKey', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center justify-between">
+                  <span>Groq API Key (Fast AI / AIDM)</span>
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-amber-400 hover:underline flex items-center gap-0.5"
+                  >
+                    console.groq.com <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </label>
+                <input
+                  id="input-groq-key"
+                  type="password"
+                  placeholder="gsk_..."
+                  value={config.groqApiKey}
+                  onChange={(e) => handleChange('groqApiKey', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
             </div>
