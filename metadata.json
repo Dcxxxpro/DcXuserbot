@@ -1,6 +1,0 @@
-{
-  "name": "DcXuserbot v5 — Inline-First Telegram Userbot",
-  "description": "Clean dual-client Telegram userbot with every command available in inline mode via a BotFather assistant, image-based sysinfo & speedtest dashboards that work on any host, and modular crash-shielded plugins.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
-}

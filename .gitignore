@@ -1,11 +1,15 @@
+# dependencies & build output
 node_modules/
 build/
 dist/
 coverage/
-.DS_Store
-*.log
+
+# env & secrets
 .env*
-!.env.example
+
+# logs & OS
+*.log
+.DS_Store
 
 # DcXuserbot runtime artifacts
 dcxuserbot/data/
