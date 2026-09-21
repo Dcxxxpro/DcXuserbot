@@ -1,573 +1,384 @@
-import React, { useState } from 'react';
-import { Send, Bot, User, RefreshCw, Sparkles, Server, Shield, Zap, Info } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Send, Image as ImageIcon, Bot, Zap, Sparkles } from 'lucide-react';
 import { SimMessage, InlineButton } from '../types';
 
+const ASSISTANT = 'DcXAssistantBot';
+
+const now = () => new Date().toTimeString().slice(0, 5);
+
+let seq = 0;
+const nextId = () => `msg-${++seq}`;
+
+const BOT_AVATAR = '⚡';
+
+function ownerMsg(text: string): SimMessage {
+  return {
+    id: nextId(), sender: 'user', senderName: 'You (Owner)', avatarText: '🧑‍💻',
+    text, time: now(),
+  };
+}
+
+function botMsg(text: string, extra?: Partial<SimMessage>): SimMessage {
+  return {
+    id: nextId(), sender: 'bot', senderName: 'DcXuserbot', avatarText: BOT_AVATAR,
+    text, time: now(), ...extra,
+  };
+}
+
+function inlineMsg(text: string, extra?: Partial<SimMessage>): SimMessage {
+  return {
+    id: nextId(), sender: 'assistant', senderName: `@${ASSISTANT} (inline)`,
+    avatarText: '🤖', text, time: now(), ...extra,
+  };
+}
+
+const WELCOME: SimMessage[] = [
+  botMsg(
+    `⚡ DcXuserbot v5 is online\n\n` +
+    `• 76 chat commands • 26 inline commands\n` +
+    `• Inline mode: type @${ASSISTANT} <command> in ANY chat\n` +
+    `• .sysinfo & .speedtest render live instance IMAGES\n\n` +
+    `Try the quick triggers below — including inline-mode demos!`
+  ),
+];
+
+// ── canned scenario responses ────────────────────────────────────────────
+const ALIVE_BUTTONS: InlineButton[][] = [
+  [
+    { text: '📊 Stats', callback_data: 'stats' },
+    { text: '🏓 Ping', callback_data: 'ping' },
+  ],
+  [
+    { text: '📖 Command Codex', callback_data: 'codex' },
+    { text: '⭐ Source', url: 'https://github.com/Dcxxxpro/DcXuserbot' },
+  ],
+];
+
+const CODEX_BUTTONS: InlineButton[][] = [
+  [
+    { text: '📡 Status (4)', callback_data: 'cat_status' },
+    { text: '🖥️ System (7)', callback_data: 'cat_system' },
+  ],
+  [
+    { text: '👮 Admin (14)', callback_data: 'cat_admin' },
+    { text: '🎉 Fun (11)', callback_data: 'cat_fun' },
+  ],
+  [
+    { text: '🧠 AI (6)', callback_data: 'cat_ai' },
+    { text: '🛠️ Tools (10)', callback_data: 'cat_tools' },
+  ],
+  [
+    { text: '🏓 Ping', callback_data: 'ping' },
+    { text: '❌ Close', callback_data: 'close' },
+  ],
+];
+
+const CAT_TEXTS: Record<string, string> = {
+  cat_status:
+    `📂 Status — page 1/1\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.alive\` — Interactive alive card\n• \`.ping\` — Real latency\n` +
+    `• \`.uptime\` — Bot + host uptime\n• \`.stats\` — Instant metrics`,
+  cat_system:
+    `📂 System — page 1/1\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.sysinfo\` — 🖼 instance dashboard image\n• \`.speedtest [quick]\` — 🖼 network scoreboard\n` +
+    `• \`.logs\` — tail service logs\n• \`.update / .restart\` — self-update\n• \`.clean\` — purge caches`,
+  cat_admin:
+    `📂 Admin — page 1/2\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.ban .unban .kick .mute .unmute\`\n• \`.promote [full] .demote\`\n` +
+    `• \`.pin [loud] .unpin [all]\`\n• \`.purge .del .zombies .invite .kickme\``,
+  cat_fun:
+    `📂 Fun — page 1/2\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.meme .cat .dog\` — image drops\n• \`.joke .quote\`\n` +
+    `• \`.dice .flip .choose\`\n• \`.mock .slap .type\``,
+  cat_ai:
+    `📂 AI — page 1/1\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.ai .groq .gemini\` — pure REST engines\n• \`.code .explain\`\n• \`.summarize [n]\``,
+  cat_tools:
+    `📂 Tools — page 1/2\n━━━━━━━━━━━━━━━━\n` +
+    `• \`.calc .cur .weather .trt\`\n• \`.qr .qrread .tiny .paste .gh .json\``,
+};
+
+function respond(input: string): SimMessage[] {
+  const text = input.trim();
+  const lower = text.toLowerCase();
+
+  // INLINE MODE — the headline feature
+  if (lower.startsWith('@' + ASSISTANT.toLowerCase())) {
+    const query = lower.replace('@' + ASSISTANT.toLowerCase(), '').trim();
+    if (query.startsWith('ping')) {
+      return [inlineMsg(
+        `🏓 Pong! \`1.8 ms\`\n🕒 ${new Date().toUTCString().slice(17, 25)} UTC\n⏳ Uptime \`2d 7h\``,
+        { replyMarkup: [[{ text: '🔄 Re-ping', callback_data: 'ping' }, { text: '⚡ Alive', callback_data: 'alive' }]] }
+      )];
+    }
+    if (query.startsWith('speedtest')) {
+      return [inlineMsg(
+        `⚡ DcX Speed Test (quick)\n⬇️ Download \`512.37 Mbps\`  ⬆️ Upload \`198.62 Mbps\`\n🏓 Ping \`9.4 ms\`  📶 Jitter \`2.1 ms\`\n🖥 Cloudflare Edge • 🌍 DcX Edge Cloud, Frankfurt`,
+        { mediaUrl: '/demo_speedtest.png', mediaLabel: 'speedtest scoreboard (rendered live by the bot)' }
+      )];
+    }
+    if (query.startsWith('sysinfo')) {
+      return [inlineMsg(
+        `🖥️ DcX Instance Telemetry\nHost: \`docker-01\` (Docker/K8s) • Debian 12\nCPU: \`8T 24%\`  RAM: \`1.2 GiB / 4 GiB\`  Uptime: \`6d 2h\``,
+        { mediaUrl: '/demo_sysinfo.png', mediaLabel: 'sysinfo dashboard (rendered live by the bot)' }
+      )];
+    }
+    if (query.startsWith('meme')) {
+      return [inlineMsg(
+        `😂 **When the inline query deploys first try**\nr/ProgrammerHumor • 👍 2.4k`
+      )];
+    }
+    if (query.startsWith('help') || !query) {
+      return [inlineMsg(
+        `📖 DcXuserbot Command Codex\n━━━━━━━━━━━━━━━━\n👑 Owner: DcX Master\n⚡ Prefixes: \`.\` (owner) • \`!\` (sudo)\n🧩 13 modules • 76 commands • 26 inline\n⌨️ Inline: @${ASSISTANT} <command>`,
+        { replyMarkup: CODEX_BUTTONS }
+      )];
+    }
+    if (query.startsWith('calc')) {
+      return [inlineMsg(`🧮 \`${query.slice(4).trim() || '2+2'}\` = **${query.includes('2+2') || !query.slice(4).trim() ? '4' : '…(evaluated safely)'}**`)];
+    }
+    return [inlineMsg(
+      `⌨️ Inline command: \`${query.split(' ')[0]}\`\n\nThat command is dispatched to the userbot and answered here.\nUse \`help\` to browse all 26 inline commands.`
+    )];
+  }
+
+  // CLASSIC COMMANDS
+  if (lower.startsWith('.alive')) {
+    return [botMsg(
+      `⚡ DcXuserbot is alive & savage\n━━━━━━━━━━━━━━━━\n👑 Owner: DcX Master\n🛰️ DcX: \`5.0.0\` • Prefix: \`.\`\n⏳ Uptime: \`2d 7h 12m\`\n⚙️ CPU / RAM: \`18% / 31%\`\n🧩 76 chat • 26 inline commands\n━━━━━━━━━━━━━━━━\n✨ Type @${ASSISTANT} <command> anywhere to control me inline.`,
+      { replyMarkup: ALIVE_BUTTONS }
+    )];
+  }
+  if (lower.startsWith('.ping')) {
+    return [botMsg(`🏓 Pong! \`0.9 ms\`\n⏳ Uptime: \`2d 7h 12m\`\n🛰️ DcX: \`5.0.0\``)];
+  }
+  if (lower.startsWith('.sysinfo')) {
+    return [botMsg(
+      `🖥️ DcX Instance Telemetry\n━━━━━━━━━━━━━━━━\n• Host: \`docker-01\` (Docker/K8s)\n• Distro: \`Debian GNU/Linux 12\`\n• CPU: \`8T 24%\` • RAM: \`1.2 GiB / 4 GiB\`\n• Uptime: \`6d 2h\` • IP: \`203.0.113.20\``,
+      { mediaUrl: '/demo_sysinfo.png', mediaLabel: 'Rendered PNG returned by .sysinfo — works on any host' }
+    )];
+  }
+  if (lower.startsWith('.speedtest')) {
+    return [botMsg(
+      `⚡ DcX Speed Test (deep)\n━━━━━━━━━━━━━━━━\n⬇️ Download: \`512.37 Mbps\`  ⬆️ Upload: \`198.62 Mbps\`\n🏓 Ping: \`9.4 ms\`  📶 Jitter: \`2.1 ms\`\n🖥 Cloudflare Edge • 🌍 DcX Edge Cloud (Frankfurt)`,
+      { mediaUrl: '/demo_speedtest.png', mediaLabel: 'Rendered PNG returned by .speedtest' }
+    )];
+  }
+  if (lower.startsWith('.help')) {
+    return [botMsg(
+      `📖 DcXuserbot Command Codex\n━━━━━━━━━━━━━━━━\n🧩 13 modules • 76 commands\n⌨️ Inline mode: @${ASSISTANT} <command>`,
+      { replyMarkup: CODEX_BUTTONS }
+    )];
+  }
+  if (lower.startsWith('.meme')) {
+    return [botMsg(`😂 **Fresh meme delivered** — r/ProgrammerHumor • 👍 1.9k\n(Image posts inline too: @${ASSISTANT} meme)`)];
+  }
+  if (lower.startsWith('.ai') || lower.startsWith('.ask')) {
+    return [botMsg(
+      `🧠 DcX AI (Groq)\nInline mode is this bot's superpower: every command is dispatched through the BotFather assistant, so \`.ping\` and \`@${ASSISTANT} ping\` share one registry, one result builder and one permission wall.`
+    )];
+  }
+  if (lower.startsWith('.pmguard')) {
+    return [botMsg(`🛡️ PM Guard is **ON** — use \`.pmguard on|off\` to toggle.`)];
+  }
+  return [botMsg(
+    `🤔 Unknown demo command. Try:\n\`.alive\` \`.sysinfo\` \`.speedtest\` \`.help\` \`.meme\` \`.ai hello\`\nor inline mode: \`@${ASSISTANT} ping\` / \`speedtest\` / \`sysinfo\` / \`help\``
+  )];
+}
+
+function callbackResponse(data: string): SimMessage[] {
+  if (data === 'ping') {
+    const lat = (0.6 + Math.random() * 1.8).toFixed(2);
+    return [inlineMsg(`🏓 Re-pinged: **${lat} ms**`)];
+  }
+  if (data === 'stats') {
+    return [inlineMsg(`📊 DcX Live Metrics\n• CPU \`18%\` • RAM \`31%\` • Disk \`24%\`\nRun \`.sysinfo\` for the full dashboard image.`)];
+  }
+  if (data === 'alive') {
+    return [inlineMsg(`⚡ Alive — uptime \`2d 7h\`, all systems nominal.`, { replyMarkup: ALIVE_BUTTONS })];
+  }
+  if (data === 'codex') {
+    return [inlineMsg(
+      `📖 DcXuserbot Command Codex\nPick a module below:`,
+      { replyMarkup: CODEX_BUTTONS }
+    )];
+  }
+  if (CAT_TEXTS[data]) {
+    return [inlineMsg(CAT_TEXTS[data], {
+      replyMarkup: [[{ text: '« Codex', callback_data: 'codex' }, { text: '❌ Close', callback_data: 'close' }]],
+    })];
+  }
+  if (data === 'close') {
+    return [inlineMsg(`_Codex closed._`)];
+  }
+  return [];
+}
+
+// ── component ─────────────────────────────────────────────────────────────
+const QUICK_TRIGGERS = [
+  { cmd: '.alive', label: '.alive', icon: <Zap className="w-3 h-3" /> },
+  { cmd: '.sysinfo', label: '.sysinfo 🖼', icon: <ImageIcon className="w-3 h-3" /> },
+  { cmd: '.speedtest', label: '.speedtest 🖼', icon: <ImageIcon className="w-3 h-3" /> },
+  { cmd: `@${ASSISTANT} ping`, label: 'inline: ping', icon: <Bot className="w-3 h-3" /> },
+  { cmd: `@${ASSISTANT} speedtest`, label: 'inline: speedtest 🖼', icon: <Bot className="w-3 h-3" /> },
+  { cmd: `@${ASSISTANT} sysinfo`, label: 'inline: sysinfo 🖼', icon: <Bot className="w-3 h-3" /> },
+  { cmd: `@${ASSISTANT} help`, label: 'inline: help', icon: <Bot className="w-3 h-3" /> },
+];
+
 export const TelegramSimulator: React.FC = () => {
-  const [inputVal, setInputVal] = useState('');
-  const [messages, setMessages] = useState<SimMessage[]>([
-    {
-      id: 'init-1',
-      sender: 'bot',
-      senderName: 'DcXuserbot Userbot (You)',
-      avatarText: 'AB',
-      text: `⚡ **DcXuserbot Dual-Client Engine Active!**\n\n• **Host:** AWS EC2 Cloud Instance (us-east-1)\n• **Architecture:** Telethon 1.34+ & Companion Assistant Bot\n• **Inline Support:** Enabled\n\n*Type commands starting with \`.\` (e.g. \`.alive\`, \`.help\`, \`.ping\`, \`.pmpermit\`) or click quick triggers below!*`,
-      time: '12:00',
-    },
-  ]);
+  const [messages, setMessages] = useState<SimMessage[]>(WELCOME);
+  const [input, setInput] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const addMessage = (msg: Omit<SimMessage, 'id' | 'time'>) => {
-    const newMsg: SimMessage = {
-      ...msg,
-      id: `msg-${Date.now()}-${Math.random()}`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setMessages((prev) => [...prev, newMsg]);
-    return newMsg.id;
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
+
+  const fire = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    setMessages((prev) => [...prev, ownerMsg(text)]);
+    window.setTimeout(() => {
+      setMessages((prev) => [...prev, ...respond(text)]);
+    }, 420);
   };
 
-  const handleCommand = (cmd: string) => {
-    const trimmed = cmd.trim();
-    if (!trimmed) return;
-
-    // 1. Add user command message
-    addMessage({
-      sender: 'user',
-      senderName: 'You (@Owner)',
-      avatarText: 'ME',
-      text: trimmed,
-    });
-
-    // 2. Process command
-    setTimeout(() => {
-      const lower = trimmed.toLowerCase();
-      if (lower === '.alive') {
-        addMessage({
-          sender: 'assistant',
-          senderName: 'DcXAssistantBot (via Inline)',
-          avatarText: '🤖',
-          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-          text: `⚡ **DcXuserbot Superior Userbot Online!**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⏳ **Uptime:** \`4d 18h 32m 10s\`\n⚙️ **CPU / RAM:** \`4.2% / 18.5%\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n🤖 **Assistant:** @DcXAssistantBot\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Interactive inline buttons below (CatUserbot Dual-Client architecture):*`,
-          replyMarkup: [
-            [
-              { text: '📊 System Stats', callback_data: 'cb_stats' },
-              { text: '⚡ Ping Test', callback_data: 'cb_ping' },
-            ],
-            [
-              { text: '📖 Help Menu', callback_data: 'cb_help' },
-              { text: '☁️ AWS EC2 Spec', callback_data: 'cb_ec2' },
-            ],
-          ],
-        });
-      } else if (lower.startsWith('.help') || lower.startsWith('!help')) {
-        addMessage({
-          sender: 'assistant',
-          senderName: 'DcXAssistantBot (via Inline Query)',
-          avatarText: '🤖',
-          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-          text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⚡ **Prefix:** \`.\` | **Sudo:** \`!\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n━━━━━━━━━━━━━━━━━━━━━━\nTap any category below to browse available commands:`,
-          replyMarkup: [
-            [
-              { text: '👮 Admin', callback_data: 'help_Admin' },
-              { text: '🛠️ Tools', callback_data: 'help_Tools' },
-              { text: '🧠 AI', callback_data: 'help_AI' },
-            ],
-            [
-              { text: '☁️ EC2', callback_data: 'help_EC2' },
-              { text: '🎨 Media', callback_data: 'help_Media' },
-              { text: '🛡️ PM Shield', callback_data: 'help_PM' },
-            ],
-            [
-              { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
-              { text: '⚡ Ping', callback_data: 'alive_ping' },
-              { text: '📊 Stats', callback_data: 'alive_stats' },
-            ],
-            [
-              { text: '« Back to Alive', callback_data: 'alive_back' },
-              { text: '❌ Close Menu', callback_data: 'help_close' },
-            ],
-          ],
-        });
-      } else if (lower === '.ping' || lower === '!ping') {
-        addMessage({
-          sender: 'assistant',
-          senderName: 'DcXAssistantBot (via Inline Query)',
-          avatarText: '🤖',
-          mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-          text: `🏓 **Pong! Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n⚡ **Response Latency:** \`1.42 ms\`\n🛰️ **Cloud Node:** \`AWS EC2 (us-east-1)\`\n⏱️ **Server Time:** \`${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC\`\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Live Interactive Telethon Benchmark via Inline Queries*`,
-          replyMarkup: [
-            [
-              { text: '🔄 Re-Ping', callback_data: 'ping_refresh' },
-              { text: '📊 System Metrics', callback_data: 'alive_stats' },
-            ],
-            [
-              { text: '« Back to Alive', callback_data: 'alive_back' },
-              { text: '🛰️ AWS Console', url: 'https://aws.amazon.com' },
-            ],
-          ],
-        });
-      } else if (lower === '.pmpermit' || lower === '.pm') {
-        addMessage({
-          sender: 'assistant',
-          senderName: 'DcXuserbot Security Shield',
-          avatarText: '🛡️',
-          text: `👋 **Hello Stranger!**\n\nI am the automated security assistant for [DcX Master](tg://user?id=12345).\nMy master is busy on AWS cloud deployments and has not approved you to send private messages yet.\n\n⚠️ **Warning:** \`1/4 strikes\`.\nSpamming will cause an automatic block.`,
-          replyMarkup: [
-            [
-              { text: '❓ Request Approval', callback_data: 'pm_req' },
-              { text: '📢 Official Channel', url: 'https://t.me' },
-            ],
-          ],
-        });
-      } else if (lower.startsWith('.update') || lower.startsWith('!update')) {
-        const isNow = lower.includes('now') || lower.includes('pull') || lower.includes('force');
-        if (!isNow) {
-          addMessage({
-            sender: 'bot',
-            senderName: 'DcXuserbot GitHub Sync',
-            avatarText: '🔄',
-            text: `🚀 **3 New Update(s) Found on GitHub!**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`7a1e9b2\` - Added auto-updater plugin (.update & !update)\n• \`4f8c210\` - Inline helper buttons parity with CatUserbot\n• \`9b3d014\` - AWS EC2 systemd auto-healing and 2GB swap optimizer\n━━━━━━━━━━━━━━━━━━━━━━\n💡 To pull the latest GitHub code and automatically restart your EC2 bot, run:\n👉 \`.update now\` (or \`!update now\`)`,
-            replyMarkup: [
-              [
-                { text: '⚡ Pull Updates & Restart Now', callback_data: 'run_update_now' },
-                { text: '« Dismiss', callback_data: 'help_close' },
-              ],
-            ],
-          });
-        } else {
-          addMessage({
-            sender: 'bot',
-            senderName: 'DcXuserbot GitHub Sync',
-            avatarText: '⚡',
-            text: `📥 **Pulling latest commits from GitHub...**\n━━━━━━━━━━━━━━━━━━━━━━\n• Executed: \`git pull --rebase\`\n• Checking \`requirements.txt\` for new packages... (synchronized)\n• Executing: \`sudo systemctl restart dcxuserbot\`\n\n✅ **Updated successfully!** Bot restarted and live on AWS EC2.\nType \`.alive\` to verify latest version!`,
-          });
-        }
-      } else if (lower.startsWith('.ai')) {
-        const query = trimmed.replace(/^\.ai\s*/i, '') || 'Tell me about AWS EC2 and Telegram Userbots';
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Gemini AI',
-          avatarText: 'AI',
-          text: `🧠 **Gemini AI Response:**\n━━━━━━━━━━━━━━━━━━━━━━\nQuery: *"${query}"*\n\nRunning Telegram userbots on **AWS EC2 (Elastic Compute Cloud)** provides enterprise-grade 99.99% uptime, dedicated network interfaces to Telegram MTProto data centers, and prevents local battery/IP limits. With a 2GB swap file enabled, even an AWS Free Tier \`t2.micro\` or \`t3.micro\` instance runs dual-client Telethon bots 24/7 without out-of-memory errors!`,
-        });
-      } else if (lower === '.ec2' || lower.startsWith('.ec2')) {
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot EC2 Monitor',
-          avatarText: '☁️',
-          text: `☁️ **AWS EC2 Live Metrics**\n━━━━━━━━━━━━━━━━━━━━━━\n• **Instance ID:** \`i-08a912bf8ec29ab3\`\n• **Type:** \`t3.micro (2 vCPU, 1GB RAM + 2GB Swap)\`\n• **Region:** \`us-east-1 (N. Virginia)\`\n• **CPU Utilization:** \`3.8%\`\n• **RAM Allocated:** \`284 MB / 988 MB\`\n• **Swap In-Use:** \`64 MB / 2048 MB\`\n• **Disk Storage:** \`4.8 GB / 20.0 GB (24%)\`\n• **Systemd Service:** \`dcxuserbot.service (active / running)\``,
-        });
-      } else if (lower.startsWith('.aidm') || lower.startsWith('!aidm')) {
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Groq AI Intelligence',
-          avatarText: '⚡',
-          text: `⚡ **Groq AI Intelligence** (\`openai/gpt-oss-120b\`)\n━━━━━━━━━━━━━━━━━━━━━━\n👤 **Analyzed User:** [Alex Developer](tg://user?id=184920412) (@alex_dev)\n━━━━━━━━━━━━━━━━━━━━━━\n👋 Greetings Alex! Based on your bio *"Building distributed systems & high-throughput Telegram microservices"*, I've aligned our chat parameters. How can I assist you with your architecture or API workflows today?`,
-        });
-      } else if (lower.startsWith('.speedtest') || lower.startsWith('!speedtest')) {
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Speedtest',
-          avatarText: '🚀',
-          text: `🚀 **AWS EC2 Speedtest Benchmark Results**\n━━━━━━━━━━━━━━━━━━━━━━\n📍 **Node Server:** \`Frankfurt Cloud Node, Germany\`\n🏓 **Ping:** \`1.42 ms\`\n📥 **Download:** \`942.15 Mbit/s\`\n📤 **Upload:** \`890.64 Mbit/s\`\n━━━━━━━━━━━━━━━━━━━━━━\n🛰️ **Cloud Node:** \`AWS EC2 (Frankfurt / Global 10Gbps Fiber)\``,
-        });
-      } else if (lower.startsWith('.join') || lower.startsWith('!join')) {
-        const target = trimmed.replace(/^[.!](join)\s*/i, '') || '@telegram';
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Channel Suite',
-          avatarText: '🔗',
-          text: `✅ **Successfully joined:** **Official Telegram Channel** (\`${target}\`)\n• Type: Public Channel\n• Anti-FloodWait Protection: Active`,
-        });
-      } else if (lower === '.quote') {
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Media Suite',
-          avatarText: '🎨',
-          text: `🎨 **Quotly Sticker Rendered!**\n[Sticker Preview Generated from replied message in WebP format with Telegram sticker attributes.]`,
-        });
-      } else {
-        addMessage({
-          sender: 'bot',
-          senderName: 'DcXuserbot Userbot',
-          avatarText: 'AB',
-          text: `ℹ️ Unrecognized command: \`${trimmed}\`\nType \`.help\` to view all commands or try \`.alive\`, \`.ping\`, \`.ai <prompt>\`, \`.ec2 status\`.`,
-        });
-      }
-    }, 450);
-  };
-
-  const handleCallbackClick = (messageId: string, button: InlineButton) => {
-    if (button.url) {
-      window.open(button.url, '_blank');
+  const clickButton = (btn: InlineButton) => {
+    if (btn.url) {
+      window.open(btn.url, '_blank', 'noopener');
       return;
     }
-
-    const cb = button.callback_data;
-    setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id !== messageId) return msg;
-
-        // Simulate callback state updates
-        if (cb === 'cb_stats' || cb === 'alive_stats') {
-          return {
-            ...msg,
-            text: `🖥️ **AWS EC2 System Breakdown**\n━━━━━━━━━━━━━━━━━━━━━━\n• **Instance:** \`i-08a912bf8ec29ab3\` (AWS us-east-1)\n• **CPU Cores:** \`2 vCPUs\` (@ 2.50GHz)\n• **CPU Load:** \`4.2%\`\n• **RAM Usage:** \`28% (276 MB / 988 MB)\`\n• **Swap Memory:** \`3.1% (64 MB / 2048 MB)\`\n• **Disk IO:** \`Read 1.2 MB/s | Write 420 KB/s\`\n• **Uptime:** \`4 days, 18 hours\``,
-            replyMarkup: [
-              [{ text: '« Back to Alive', callback_data: 'alive_back' }, { text: '⚡ Latency Ping', callback_data: 'alive_ping' }],
-            ],
-          };
-        }
-        if (cb === 'cb_ping' || cb === 'alive_ping' || cb === 'ping_refresh') {
-          const randLat = (1.2 + Math.random() * 0.6).toFixed(2);
-          return {
-            ...msg,
-            text: `⚡ **Live Latency Benchmark**\n━━━━━━━━━━━━━━━━━━━━━━\n• **AWS EC2 -> Telegram DC4:** \`${randLat} ms\`\n• **AWS EC2 -> Telegram DC2:** \`24.1 ms\`\n• **Packet Loss:** \`0.0%\`\n• **Clock Drift:** \`< 1 ms (NTP synced)\``,
-            replyMarkup: [
-              [
-                { text: '🔄 Re-Ping', callback_data: 'ping_refresh' },
-                { text: '📊 System Metrics', callback_data: 'alive_stats' },
-              ],
-              [
-                { text: '« Back to Alive', callback_data: 'alive_back' },
-                { text: '🛰️ AWS Console', url: 'https://aws.amazon.com' },
-              ],
-            ],
-          };
-        }
-        if (cb === 'cb_alive_back' || cb === 'alive_back') {
-          return {
-            ...msg,
-            text: `⚡ **DcXuserbot Superior Userbot Online!**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⏳ **Uptime:** \`4d 18h 32m 10s\`\n⚙️ **CPU / RAM:** \`4.2% / 18.5%\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n🤖 **Assistant:** @DcXAssistantBot\n━━━━━━━━━━━━━━━━━━━━━━\n✨ *Interactive inline buttons below:*`,
-            replyMarkup: [
-              [
-                { text: '📊 System Stats', callback_data: 'alive_stats' },
-                { text: '⚡ Ping Test', callback_data: 'alive_ping' },
-              ],
-              [
-                { text: '📖 Help Menu', callback_data: 'cb_help' },
-                { text: '☁️ AWS EC2 Spec', callback_data: 'cb_ec2' },
-              ],
-            ],
-          };
-        }
-        if (cb === 'cb_help' || cb === 'help_back' || cb === 'help_main') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `📖 **DcXuserbot Command Codex**\n━━━━━━━━━━━━━━━━━━━━━━\n👑 **Owner:** DcX Master\n⚡ **Prefix:** \`.\` | **Sudo:** \`!\`\n🛰️ **Host:** \`AWS EC2 (us-east-1)\`\n━━━━━━━━━━━━━━━━━━━━━━\nTap any category below to browse available commands:`,
-            replyMarkup: [
-              [
-                { text: '👮 Admin', callback_data: 'help_Admin' },
-                { text: '🛠️ Tools', callback_data: 'help_Tools' },
-                { text: '🧠 AI', callback_data: 'help_AI' },
-              ],
-              [
-                { text: '☁️ EC2', callback_data: 'help_EC2' },
-                { text: '🎨 Media', callback_data: 'help_Media' },
-                { text: '🛡️ PM Shield', callback_data: 'help_PM' },
-              ],
-              [
-                { text: '📢 Broadcast', callback_data: 'help_Broadcast' },
-                { text: '⚡ Ping', callback_data: 'alive_ping' },
-                { text: '📊 Stats', callback_data: 'alive_stats' },
-              ],
-              [
-                { text: '« Back to Alive', callback_data: 'alive_back' },
-                { text: '❌ Close Menu', callback_data: 'help_close' },
-              ],
-            ],
-          };
-        }
-        if (cb === 'help_Admin' || cb === 'help_admin') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `👮 **Group Moderation & Administration:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ban <reply/user>\` - Ban user from current chat\n• \`.unban <reply/user>\` - Unban user from group\n• \`.mute <reply/user>\` - Mute member in group\n• \`.unmute <reply/user>\` - Unmute restricted member\n• \`.kick <reply/user>\` - Kick member from group\n• \`.purge <reply>\` - Lightning bulk purge messages\n• \`.pin [loud]\` - Pin replied message silently or with alert\n• \`.promote <title>\` - Promote member to admin status\n• \`.demote\` - Revoke administrator rights\n• \`.zombies\` - Clean deleted Telegram accounts\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_Tools' || cb === 'help_tools') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `🛠️ **Utility Arsenal & Diagnostics:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ping\` - Sub-millisecond latency benchmark with inline buttons\n• \`.speedtest\` - Run live network bandwidth benchmark\n• \`.whois <reply>\` - Extract full user info, ID, DC & bio\n• \`.join <target>\` - Join channels & private invite hashes\n• \`.calc <math>\` - Built-in high-precision calculator\n• \`.id\` - Fetch chat ID, sender ID, and DC number\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_AI' || cb === 'help_ai') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `🧠 **Groq & Gemini Artificial Intelligence:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.aidm <query>\` - Profile scanner with Groq openai/gpt-oss-120b\n• \`.ai <prompt>\` - Ask Google Gemini AI directly with multimodal\n• \`.summarize\` - Summarize replied chat conversation\n• \`.code <prompt>\` - Generate, explain & inspect code snippets\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_EC2' || cb === 'help_ec2' || cb === 'cb_ec2') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `☁️ **AWS EC2 Cloud Infrastructure:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.ec2 status\` - Live instance load, CPU, RAM & disk telemetry\n• \`.ec2 reboot\` - Graceful soft reboot of dcxuserbot daemon\n• \`.ec2 logs\` - Inspect live systemd service journalctl logs\n• \`Host Node:\` AWS EC2 us-east-1 (Amazon Linux 2023)\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_Media' || cb === 'help_media') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `🎨 **Media Converters & Downloader:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.quote\` - Convert replied message into Quotly Telegram sticker\n• \`.song <name>\` - Download high-res audio mp3 via yt-dlp\n• \`.video <name>\` - Download YouTube & social video clips\n• \`.telegraph\` - Upload media to Telegraph CDN fast\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_PM' || cb === 'help_pm') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `🛡️ **Anti-PM Spam Shield & Gatekeeper:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.approve\` - Whitelist replied user for private messages\n• \`.disapprove\` - Remove user from approved whitelist\n• \`.block\` - Immediately block spammer and report\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_Broadcast' || cb === 'help_broadcast') {
-          return {
-            ...msg,
-            mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
-            text: `📢 **Broadcast & Mass Mentions:**\n━━━━━━━━━━━━━━━━━━━━━━\n• \`.tagall [message]\` - Mention all group members safely\n• \`.gcast <message>\` - Broadcast announcements across joined groups\n• \`.cancel\` - Stop ongoing tagall or broadcast task\n━━━━━━━━━━━━━━━━━━━━━━\n💡 *Click '« Back' to return to the 3-column menu or '❌ Close' to exit.*`,
-            replyMarkup: [[{ text: '« Back', callback_data: 'help_main' }, { text: '❌ Close', callback_data: 'help_close' }]],
-          };
-        }
-        if (cb === 'help_close') {
-          return {
-            ...msg,
-            text: `❌ **Command Codex closed.**\nType \`.help\` anytime to re-open the interactive 3-column menu.`,
-            replyMarkup: undefined,
-          };
-        }
-        if (cb === 'run_update_now') {
-          return {
-            ...msg,
-            text: `📥 **Pulling latest commits from GitHub...**\n━━━━━━━━━━━━━━━━━━━━━━\n• Executed: \`git pull --rebase\`\n• Checking \`requirements.txt\` for new packages... (synchronized)\n• Executing: \`sudo systemctl restart dcxuserbot\`\n\n✅ **Updated successfully!** Bot restarted and live on AWS EC2.\nType \`.alive\` to verify latest version!`,
-            replyMarkup: undefined,
-          };
-        }
-        if (cb === 'pm_req') {
-          return {
-            ...msg,
-            text: `✅ **Approval Request Sent!**\nA notification was dispatched to [DcX Master]. You will be granted permission once reviewed.`,
-            replyMarkup: undefined,
-          };
-        }
-
-        return msg;
-      })
-    );
+    if (!btn.callback_data) return;
+    window.setTimeout(() => {
+      setMessages((prev) => [...prev, ...callbackResponse(btn.callback_data!)]);
+    }, 220);
   };
-
-  const handleResetChat = () => {
-    setMessages([
-      {
-        id: 'init-1',
-        sender: 'bot',
-        senderName: 'DcXuserbot Userbot (You)',
-        avatarText: 'AB',
-        text: `⚡ **DcXuserbot Dual-Client Engine Active!**\n\n• **Host:** AWS EC2 Cloud Instance (us-east-1)\n• **Architecture:** Telethon 1.34+ & Companion Assistant Bot\n• **Inline Support:** Enabled\n\n*Type commands starting with \`.\` (e.g. \`.alive\`, \`.help\`, \`.ping\`, \`.pmpermit\`) or click quick triggers below!*`,
-        time: '12:00',
-      },
-    ]);
-  };
-
-  const quickCommands = [
-    { cmd: '.update', label: '.update (GitHub Sync)', icon: RefreshCw },
-    { cmd: '.alive', label: '.alive (Interactive Buttons)', icon: Zap },
-    { cmd: '.aidm', label: '.aidm (Groq AI Profile)', icon: Sparkles },
-    { cmd: '.speedtest', label: '.speedtest (Frankfurt)', icon: Server },
-    { cmd: '.join @telegram', label: '.join (@channel / link)', icon: Info },
-    { cmd: '.help', label: '.help (Codex Menu)', icon: Info },
-    { cmd: '.ping', label: '.ping (Latency)', icon: RefreshCw },
-    { cmd: '.ec2 status', label: '.ec2 status (AWS Metrics)', icon: Server },
-    { cmd: '.pmpermit', label: '.pmpermit (Anti-Spam Shield)', icon: Shield },
-  ];
 
   return (
-    <div id="telegram-simulator-wrapper" className="max-w-4xl mx-auto space-y-4">
-      {/* Simulation Info Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+    <div id="telegram-simulator" className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
+      {/* header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-950/70 border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-            <Bot className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center text-base">
+            🤖
           </div>
           <div>
-            <h3 className="text-xs font-semibold text-slate-200">
-              Live Telegram Chat & Dual-Client Simulator
-            </h3>
-            <p className="text-[11px] text-slate-400">
-              Experience real-time commands & interactive inline keyboard buttons just like CatUserbot on Telegram.
-            </p>
+            <p className="text-sm font-semibold text-slate-100">DcXuserbot saved messages</p>
+            <p className="text-[11px] text-emerald-400 font-mono">online • inline assistant @{ASSISTANT}</p>
           </div>
         </div>
         <button
-          onClick={handleResetChat}
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 bg-slate-800 hover:text-slate-200 hover:bg-slate-700 transition"
+          id="sim-reset"
+          onClick={() => setMessages(WELCOME)}
+          className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Clear Simulator</span>
+          Reset
         </button>
       </div>
 
-      {/* Telegram Chat Box */}
-      <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[580px]">
-        {/* Chat Window Header */}
-        <div className="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-xs text-white">
-                AB
-              </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900"></span>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-semibold text-slate-200">Saved Messages & Testing Sandbox</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-400 font-mono">
-                  Dual-Client
-                </span>
-              </div>
-              <p className="text-[11px] text-emerald-400 font-mono">online • AWS EC2 Node active</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-[11px] text-slate-500 font-mono">Telethon v1.34+</span>
-          </div>
-        </div>
-
-        {/* Message Feed */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/50 via-slate-950 to-slate-950">
-          {messages.map((msg) => {
-            const isUser = msg.sender === 'user';
-            return (
-              <div
-                key={msg.id}
-                className={`flex items-start space-x-2.5 ${
-                  isUser ? 'flex-row-reverse space-x-reverse' : ''
-                }`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                    isUser
-                      ? 'bg-indigo-600 text-white'
-                      : msg.sender === 'assistant'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      : 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+      {/* messages */}
+      <div ref={scrollRef} className="h-[420px] overflow-y-auto px-4 py-4 space-y-3 bg-slate-950/40">
+        {messages.map((msg) => (
+          <div key={msg.id} className="space-y-1.5">
+            <div
+              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 border ${
+                msg.sender === 'user'
+                  ? 'ml-auto bg-sky-600/20 border-sky-500/25 rounded-br-sm'
+                  : msg.sender === 'assistant'
+                    ? 'bg-indigo-600/15 border-indigo-500/30 rounded-bl-sm'
+                    : 'bg-slate-800/70 border-slate-700/60 rounded-bl-sm'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs">{msg.avatarText}</span>
+                <span
+                  className={`text-[10px] font-mono ${
+                    msg.sender === 'assistant' ? 'text-indigo-300' : 'text-slate-400'
                   }`}
                 >
-                  {msg.avatarText}
-                </div>
-
-                {/* Bubble Container */}
-                <div className={`max-w-[85%] sm:max-w-[75%] space-y-1.5`}>
-                  <div className="flex items-center space-x-2 px-1">
-                    <span className="text-[10px] font-semibold text-slate-400">
-                      {msg.senderName}
-                    </span>
-                    <span className="text-[10px] text-slate-600 font-mono">{msg.time}</span>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl px-4 py-3 text-xs leading-relaxed font-sans shadow-md ${
-                      isUser
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'
-                    }`}
-                  >
-                    {/* Header Photo Banner */}
-                    {msg.mediaUrl && (
-                      <div className="mb-3 -mx-1 -mt-1 overflow-hidden rounded-xl border border-slate-700/60 shadow-md">
-                        <img
-                          src={msg.mediaUrl}
-                          alt="Header Photo Banner"
-                          className="w-full h-32 sm:h-36 object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    )}
-
-                    <div className="whitespace-pre-wrap">{msg.text}</div>
-
-                    {/* Inline Keyboard Buttons (CatUserbot style) */}
-                    {msg.replyMarkup && msg.replyMarkup.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-emerald-500/20 space-y-1.5">
-                        {msg.replyMarkup.map((row, rowIdx) => (
-                          <div
-                            key={rowIdx}
-                            className={`grid gap-1.5 ${
-                              row.length === 1
-                                ? 'grid-cols-1'
-                                : row.length === 2
-                                ? 'grid-cols-2'
-                                : row.length === 3
-                                ? 'grid-cols-3'
-                                : 'grid-cols-4'
-                            }`}
-                          >
-                            {row.map((btn, btnIdx) => (
-                              <button
-                                key={btnIdx}
-                                onClick={() => handleCallbackClick(msg.id, btn)}
-                                className="px-3 py-2 text-[11px] font-semibold rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-600/40 hover:border-emerald-400/70 transition shadow-sm active:scale-[0.98] text-center flex items-center justify-center space-x-1"
-                              >
-                                <span>{btn.text}</span>
-                              </button>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  {msg.senderName}
+                </span>
               </div>
-            );
-          })}
-        </div>
+              {msg.mediaUrl && (
+                <div className="mb-2 rounded-lg overflow-hidden border border-slate-700/60 bg-slate-950">
+                  <img src={msg.mediaUrl} alt={msg.mediaLabel || 'media'} className="w-full block" />
+                  <p className="text-[10px] text-slate-500 font-mono px-2 py-1.5 flex items-center gap-1">
+                    <ImageIcon className="w-3 h-3" /> {msg.mediaLabel}
+                  </p>
+                </div>
+              )}
+              <p className="text-[13px] text-slate-200 whitespace-pre-wrap leading-relaxed font-mono">
+                {msg.text}
+              </p>
+              <div className="text-[9px] text-slate-500 text-right mt-1 font-mono">{msg.time}</div>
+            </div>
+            {msg.replyMarkup && (
+              <div className={`flex flex-col gap-1 max-w-[85%] ${msg.sender === 'user' ? 'ml-auto' : ''}`}>
+                {msg.replyMarkup.map((row, i) => (
+                  <div key={i} className="flex gap-1">
+                    {row.map((btn, j) => (
+                      <button
+                        key={j}
+                        onClick={() => clickButton(btn)}
+                        className="flex-1 text-[11px] font-medium py-1.5 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-sky-300 border border-slate-700/70 transition text-center"
+                      >
+                        {btn.text}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-        {/* Quick Command Chips */}
-        <div className="px-4 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center space-x-2 overflow-x-auto">
-          <span className="text-[10px] text-slate-500 font-mono uppercase whitespace-nowrap">
-            Quick Tests:
-          </span>
-          {quickCommands.map((item) => (
-            <button
-              key={item.cmd}
-              onClick={() => handleCommand(item.cmd)}
-              className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-slate-800 text-slate-300 hover:text-sky-300 hover:bg-slate-700 border border-slate-700/60 whitespace-nowrap transition"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Input Bar */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleCommand(inputVal);
-            setInputVal('');
-          }}
-          className="p-3 bg-slate-900 border-t border-slate-800 flex items-center space-x-2"
-        >
-          <input
-            id="telegram-chat-input"
-            type="text"
-            placeholder="Type a userbot command (e.g. .alive, .help, .ping, .ai)..."
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
-          />
+      {/* quick triggers */}
+      <div className="px-3 py-2 border-t border-slate-800 bg-slate-950/60 flex gap-1.5 overflow-x-auto">
+        {QUICK_TRIGGERS.map((t) => (
           <button
-            type="submit"
-            className="p-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition shadow-md shadow-sky-600/20"
+            key={t.label}
+            onClick={() => fire(t.cmd)}
+            className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700/60 transition"
           >
-            <Send className="w-4 h-4" />
+            {t.icon}
+            {t.label}
           </button>
-        </form>
+        ))}
+      </div>
+
+      {/* input */}
+      <div className="px-3 py-2.5 border-t border-slate-800 bg-slate-950/80 flex items-center gap-2">
+        <input
+          id="sim-input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              fire(input);
+              setInput('');
+            }
+          }}
+          placeholder={`Type a command — try "@${ASSISTANT} sysinfo"…`}
+          className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-sky-500/60"
+        />
+        <button
+          id="sim-send"
+          onClick={() => {
+            fire(input);
+            setInput('');
+          }}
+          className="p-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white transition"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="px-4 py-2 bg-slate-950/70 border-t border-slate-800 flex items-center gap-1.5">
+        <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+        <p className="text-[11px] text-slate-500">
+          Simulated locally. The dashboard images above are real renders from the v5 renderer.
+        </p>
       </div>
     </div>
   );
