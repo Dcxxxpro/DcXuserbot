@@ -1,0 +1,9 @@
+# DcXuserbot v5 — lean, purpose-picked dependencies
+telethon>=1.36.0,<2.0.0      # Telegram MTProto client (userbot + assistant)
+cryptg>=0.4.0                # native crypto → much faster MTProto
+aiohttp>=3.9.5               # shared async HTTP for APIs & the speedtest
+Pillow>=10.3.0               # renders sysinfo / speedtest dashboard images
+psutil>=5.9.8                # cross-platform host telemetry
+python-dotenv>=1.0.1         # .env support
+gTTS>=2.5.1                  # free text-to-speech (.tts)
+yt-dlp>=2024.4.9             # .song / .video downloads

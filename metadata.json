@@ -1,6 +1,6 @@
 {
-  "name": "ApexBot - AWS EC2 Telegram Userbot Suite",
-  "description": "Production-grade Telegram userbot source code with inline button assistant bot support, modular plugins, and AWS EC2 deployment automation.",
+  "name": "DcXuserbot v5 — Inline-First Telegram Userbot",
+  "description": "Clean dual-client Telegram userbot with every command available in inline mode via a BotFather assistant, image-based sysinfo & speedtest dashboards that work on any host, and modular crash-shielded plugins.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
