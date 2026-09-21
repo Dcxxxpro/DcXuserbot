@@ -15,10 +15,8 @@ export interface UserbotConfig {
   sudoUsers: string;
   commandHandler: string;
   aliveName: string;
-  geminiApiKey: string;
   groqApiKey: string;
-  awsRegion: string;
-  ec2InstanceType: string;
+  geminiApiKey: string;
 }
 
 export interface InlineButton {
@@ -35,6 +33,7 @@ export interface SimMessage {
   text: string;
   time: string;
   mediaUrl?: string;
+  mediaLabel?: string;
   isEdited?: boolean;
   replyMarkup?: InlineButton[][];
 }

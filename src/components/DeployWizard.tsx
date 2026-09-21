@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Server, Copy, Check, ShieldCheck, Terminal, ExternalLink, Cpu, HardDrive } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Copy, Check, KeyRound, Bot, Cpu, Rocket, ChevronRight } from 'lucide-react';
 import { UserbotConfig } from '../types';
 
 interface DeployWizardProps {
@@ -7,438 +7,199 @@ interface DeployWizardProps {
   setConfig: React.Dispatch<React.SetStateAction<UserbotConfig>>;
 }
 
+type Target = 'docker' | 'systemd' | 'manual' | 'termux';
+
+const TARGET_COMMANDS: Record<Target, string> = {
+  docker: `git clone https://github.com/Dcxxxpro/DcXuserbot
+cd DcXuserbot/dcxuserbot
+cp sample_config.env .env   # paste your values into .env
+docker compose up -d --build`,
+  systemd: `pip install -r requirements.txt
+cp sample_config.env .env   # fill values
+sudo tee /etc/systemd/system/dcxuserbot.service >/dev/null <<'UNIT'
+[Unit]
+Description=DcXuserbot
+After=network.target
+
+[Service]
+WorkingDirectory=$PWD
+EnvironmentFile=$PWD/.env
+ExecStart=/usr/bin/python3 -m dcx
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+sudo systemctl daemon-reload
+sudo systemctl enable --now dcxuserbot`,
+  manual: `pip install -r requirements.txt
+cp sample_config.env .env   # fill values
+python -m dcx`,
+  termux: `pkg install python ffmpeg libjpeg-turbo git
+pip install -r requirements.txt
+cp sample_config.env .env   # fill values
+python -m dcx`,
+};
+
+const Field: React.FC<{
+  id: string; label: string; value: string; placeholder?: string;
+  secret?: boolean; mono?: boolean;
+  onChange: (v: string) => void;
+}> = ({ id, label, value, placeholder, secret, mono, onChange }) => (
+  <label htmlFor={id} className="block space-y-1">
+    <span className="text-[11px] font-medium text-slate-400">{label}</span>
+    <input
+      id={id}
+      type={secret ? 'password' : 'text'}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-sky-500/60 ${mono ? 'font-mono' : ''}`}
+    />
+  </label>
+);
+
 export const DeployWizard: React.FC<DeployWizardProps> = ({ config, setConfig }) => {
-  const [copiedEnv, setCopiedEnv] = useState(false);
-  const [copiedUserData, setCopiedUserData] = useState(false);
-  const [copiedSshCmd, setCopiedSshCmd] = useState(false);
+  const [target, setTarget] = useState<Target>('docker');
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const handleChange = (field: keyof UserbotConfig, value: string) => {
-    setConfig((prev) => ({ ...prev, [field]: value }));
-  };
+  const set = (key: keyof UserbotConfig) => (v: string) =>
+    setConfig((prev) => ({ ...prev, [key]: v }));
 
-  const generatedEnv = `# ==========================================================
-# DcXuserbot - AWS EC2 Environment Configuration
-# ==========================================================
-API_ID=${config.apiId || '1234567'}
-API_HASH=${config.apiHash || 'abcdef0123456789abcdef0123456789'}
-STRING_SESSION=${config.stringSession || '1BVtsO...YourTelethonStringSessionHere...'}
-BOT_TOKEN=${config.botToken || '7123456789:AAH...YourBotFatherTokenHere...'}
+  const envPreview = useMemo(
+    () => `API_ID=${config.apiId || '12345678'}
+API_HASH=${config.apiHash || 'your_api_hash'}
+STRING_SESSION=${config.stringSession || 'python -m dcx.session_string → paste here'}
+BOT_TOKEN=${config.botToken || '123456:ABC-from-botfather'}
 BOT_USERNAME=${config.botUsername || 'DcXAssistantBot'}
 COMMAND_HAND_LER=${config.commandHandler || '.'}
 SUDO_COMMAND_HAND_LER=!
-SUDO_USERS=${config.sudoUsers || ''}
-ALIVE_NAME=${config.aliveName || 'DcX Commander'}
-ALIVE_MEDIA=https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200
-GEMINI_API_KEY=${config.geminiApiKey || ''}
-GROQ_API_KEY=${config.groqApiKey || ''}
-PM_PERMIT=True
+SUDO_USERS=${config.sudoUsers}
+ALIVE_NAME=${config.aliveName || 'DcX Master'}
+GROQ_API_KEY=${config.groqApiKey}
+GEMINI_API_KEY=${config.geminiApiKey}
+PM_PERMIT=true
 PM_LIMIT=4
-AWS_REGION=${config.awsRegion || 'us-east-1'}
-AWS_INSTANCE_ID=i-ec2-dcxuserbot
-`;
+LOG_LEVEL=INFO`,
+    [config]
+  );
 
-  const userDataScript = `#!/bin/bash
-# AWS EC2 User Data (Cloud-Init) Bootstrap
-# Automatically runs on first boot of Ubuntu 22.04/24.04
-set -e
-
-apt-get update -y
-apt-get install -y git curl python3 python3-pip python3-venv ffmpeg
-
-# 2GB Swap setup for t2.micro stability
-fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
-
-# Clone repository
-cd /home/ubuntu
-git clone https://github.com/DcXuserbot/Userbot.git dcxuserbot || true
-cd dcxuserbot
-
-# Write configured .env
-cat << 'EOF' > .env
-${generatedEnv}
-EOF
-
-chmod +x setup_ec2.sh
-./setup_ec2.sh
-systemctl start dcxuserbot
-`;
-
-  const sshQuickCommands = `# 1. Connect to your AWS EC2 instance
-ssh -i "your-key.pem" ubuntu@your-instance-ip
-
-# 2. Clone & Enter Directory
-git clone https://github.com/DcXuserbot/Userbot.git
-cd Userbot
-
-# 3. Save your credentials into .env
-nano .env
-
-# 4. Run automated provisioning (allocates 2GB swap, installs ffmpeg & systemd)
-chmod +x setup_ec2.sh
-./setup_ec2.sh
-
-# 5. Start and watch 24/7 background logs
-sudo systemctl start dcxuserbot
-sudo journalctl -u dcxuserbot -f
-`;
-
-  const copyToClipboard = (text: string, setFn: (v: boolean) => void) => {
-    navigator.clipboard.writeText(text);
-    setFn(true);
-    setTimeout(() => setFn(false), 2000);
+  const copy = async (id: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(id);
+    window.setTimeout(() => setCopied(null), 1800);
   };
 
-  return (
-    <div id="deploy-wizard-container" className="max-w-6xl mx-auto space-y-8">
-      {/* Intro Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                <Server className="w-5 h-5" />
-              </span>
-              <h2 className="text-base font-bold text-slate-100">
-                AWS EC2 Production Deployment Wizard
-              </h2>
-            </div>
-            <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-              Configure your credentials once. This wizard generates your live production{' '}
-              <code className="text-sky-400 font-mono">.env</code>, AWS EC2 Cloud-Init launch script,
-              and step-by-step verified terminal instructions.
-            </p>
-          </div>
+  const CopyBtn: React.FC<{ id: string; text: string }> = ({ id, text }) => (
+    <button
+      onClick={() => copy(id, text)}
+      className="absolute top-2 right-2 p-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 transition"
+    >
+      {copied === id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
+  );
 
-          <div className="flex items-center space-x-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-            <Cpu className="w-4 h-4 text-sky-400" />
-            <div className="text-[11px] font-mono text-slate-300">
-              Target: <span className="text-emerald-400 font-bold">t2.micro / t3.micro</span> (Free Tier)
-            </div>
+  return (
+    <div id="deploy-wizard" className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* LEFT — inputs */}
+      <div className="space-y-4">
+        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-sky-400" /> 1 · Telegram API credentials
+          </h3>
+          <p className="text-[11px] text-slate-500">
+            Grab <code className="text-slate-300">API_ID</code> + <code className="text-slate-300">API_HASH</code> at my.telegram.org → API development tools.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="api-id" label="API_ID" value={config.apiId} placeholder="12345678" mono onChange={set('apiId')} />
+            <Field id="api-hash" label="API_HASH" value={config.apiHash} placeholder="abcdef0123…" mono secret onChange={set('apiHash')} />
           </div>
-        </div>
+          <Field id="session" label="STRING_SESSION (run: python -m dcx.session_string)" value={config.stringSession} placeholder="1BVtsO…" mono secret onChange={set('stringSession')} />
+        </section>
+
+        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <Bot className="w-4 h-4 text-indigo-400" /> 2 · BotFather assistant — unlocks full inline mode
+          </h3>
+          <ol className="text-[11px] text-slate-500 space-y-1 list-decimal list-inside">
+            <li>@BotFather → <code className="text-slate-300">/newbot</code></li>
+            <li><code className="text-slate-300">/setinline</code> → pick your bot → e.g. <code className="text-slate-300">DcXuserbot inline</code></li>
+            <li>Paste token + username here.</li>
+          </ol>
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="bot-token" label="BOT_TOKEN" value={config.botToken} placeholder="123456:ABC…" mono secret onChange={set('botToken')} />
+            <Field id="bot-username" label="BOT_USERNAME" value={config.botUsername} placeholder="DcXAssistantBot" mono onChange={set('botUsername')} />
+          </div>
+        </section>
+
+        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-emerald-400" /> 3 · Personalization & AI
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="alive-name" label="ALIVE_NAME" value={config.aliveName} onChange={set('aliveName')} />
+            <Field id="handler" label="COMMAND_HAND_LER" value={config.commandHandler} placeholder="." onChange={set('commandHandler')} />
+            <Field id="sudo" label="SUDO_USERS (comma IDs)" value={config.sudoUsers} placeholder="111,222" mono onChange={set('sudoUsers')} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="groq" label="GROQ_API_KEY (optional)" value={config.groqApiKey} mono secret onChange={set('groqApiKey')} />
+            <Field id="gemini" label="GEMINI_API_KEY (optional)" value={config.geminiApiKey} mono secret onChange={set('geminiApiKey')} />
+          </div>
+        </section>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Form Configuration */}
-        <div className="lg:col-span-6 space-y-5">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-sky-400" />
-                1. Telegram Core Credentials
-              </h3>
-              <a
-                href="https://my.telegram.org"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-sky-400 hover:underline flex items-center gap-1"
-              >
-                my.telegram.org <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  API_ID (Telegram App ID)
-                </label>
-                <input
-                  id="input-api-id"
-                  type="text"
-                  placeholder="e.g. 24891234"
-                  value={config.apiId}
-                  onChange={(e) => handleChange('apiId', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  API_HASH (Telegram App Secret)
-                </label>
-                <input
-                  id="input-api-hash"
-                  type="text"
-                  placeholder="e.g. 7f8a3c89b9e23..."
-                  value={config.apiHash}
-                  onChange={(e) => handleChange('apiHash', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                STRING_SESSION (Telethon Userbot Session)
-              </label>
-              <input
-                id="input-string-session"
-                type="password"
-                placeholder="1BVtsO..."
-                value={config.stringSession}
-                onChange={(e) => handleChange('stringSession', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-              />
-              <p className="text-[10px] text-slate-500 mt-1">
-                Generated via Telethon StringSession. Kept strictly local inside your .env on AWS EC2.
-              </p>
-            </div>
+      {/* RIGHT — env preview + deploy targets */}
+      <div className="space-y-4">
+        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <h3 className="text-sm font-semibold text-slate-100">.env preview</h3>
+          <div className="relative">
+            <pre className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre">
+{envPreview}
+            </pre>
+            <CopyBtn id="env" text={envPreview} />
           </div>
+          <p className="text-[11px] text-slate-500">
+            The exported ZIP already includes this as <code className="text-slate-300">.env</code> when API_ID is filled.
+          </p>
+        </section>
 
-          {/* CatUserbot Dual-Client: Assistant Bot */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <span className="text-amber-400">🤖</span>
-                2. Companion Bot for Inline Buttons (CatUserbot Model)
-              </h3>
-              <a
-                href="https://t.me/BotFather"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-sky-400 hover:underline flex items-center gap-1"
-              >
-                @BotFather <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  BOT_TOKEN (From @BotFather)
-                </label>
-                <input
-                  id="input-bot-token"
-                  type="password"
-                  placeholder="7123456789:AAH..."
-                  value={config.botToken}
-                  onChange={(e) => handleChange('botToken', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  BOT_USERNAME
-                </label>
-                <input
-                  id="input-bot-username"
-                  type="text"
-                  placeholder="DcXAssistantBot"
-                  value={config.botUsername}
-                  onChange={(e) => handleChange('botUsername', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 leading-relaxed">
-              💡 <strong>Why is this required?</strong> Telegram User accounts cannot natively attach inline keyboard buttons to messages. By pairing a lightweight companion bot token, your userbot seamlessly routes inline queries to display clickable buttons (just like CatUserbot).
-            </p>
-          </div>
-
-          {/* Preferences & Cloud Specs */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="text-xs font-semibold text-slate-200 border-b border-slate-800 pb-3">
-              3. Personalization & AWS Region
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  Command Prefix
-                </label>
-                <input
-                  id="input-command-handler"
-                  type="text"
-                  value={config.commandHandler}
-                  onChange={(e) => handleChange('commandHandler', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  Alive Master Name
-                </label>
-                <input
-                  id="input-alive-name"
-                  type="text"
-                  value={config.aliveName}
-                  onChange={(e) => handleChange('aliveName', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  AWS Region
-                </label>
-                <select
-                  value={config.awsRegion}
-                  onChange={(e) => handleChange('awsRegion', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                >
-                  <option value="us-east-1">us-east-1 (N. Virginia - Lowest Ping)</option>
-                  <option value="us-west-2">us-west-2 (Oregon)</option>
-                  <option value="eu-west-1">eu-west-1 (Ireland - Close to Telegram DC4)</option>
-                  <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
-                  <option value="ap-south-1">ap-south-1 (Mumbai - Close to Telegram DC5)</option>
-                  <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                  Gemini API Key (Optional AI)
-                </label>
-                <input
-                  id="input-gemini-key"
-                  type="password"
-                  placeholder="AIzaSy..."
-                  value={config.geminiApiKey}
-                  onChange={(e) => handleChange('geminiApiKey', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center justify-between">
-                  <span>Groq API Key (Fast AI / AIDM)</span>
-                  <a
-                    href="https://console.groq.com/keys"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] text-amber-400 hover:underline flex items-center gap-0.5"
-                  >
-                    console.groq.com <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </label>
-                <input
-                  id="input-groq-key"
-                  type="password"
-                  placeholder="gsk_..."
-                  value={config.groqApiKey}
-                  onChange={(e) => handleChange('groqApiKey', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Generated .env & Launch Scripts */}
-        <div className="lg:col-span-6 space-y-5">
-          {/* Live .env preview */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300 font-mono flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-sky-400" />
-                Live Generated .env
-              </span>
+        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <Rocket className="w-4 h-4 text-amber-400" /> 4 · Pick your host — identical output everywhere
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(['docker', 'systemd', 'manual', 'termux'] as Target[]).map((t) => (
               <button
-                id="copy-generated-env-btn"
-                onClick={() => copyToClipboard(generatedEnv, setCopiedEnv)}
-                className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition"
+                key={t}
+                id={`target-${t}`}
+                onClick={() => setTarget(t)}
+                className={`px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 ${
+                  target === t
+                    ? 'bg-sky-500/15 text-sky-300 border-sky-500/40'
+                    : 'bg-slate-950 text-slate-400 border-slate-700/70 hover:text-slate-200'
+                }`}
               >
-                {copiedEnv ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 font-mono">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="font-mono">Copy .env</span>
-                  </>
-                )}
+                {t === 'docker' && 'Docker'}
+                {t === 'systemd' && 'systemd'}
+                {t === 'manual' && 'Manual'}
+                {t === 'termux' && 'Termux'}
+                <ChevronRight className="w-3 h-3" />
               </button>
-            </div>
-            <div className="p-4 bg-slate-950 max-h-56 overflow-y-auto font-mono text-[11px] text-sky-300/90 leading-relaxed whitespace-pre">
-              {generatedEnv}
-            </div>
+            ))}
           </div>
-
-          {/* SSH Steps */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <HardDrive className="w-3.5 h-3.5 text-amber-400" />
-                AWS EC2 SSH Terminal Commands
-              </span>
-              <button
-                id="copy-ssh-cmd-btn"
-                onClick={() => copyToClipboard(sshQuickCommands, setCopiedSshCmd)}
-                className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition"
-              >
-                {copiedSshCmd ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 font-mono">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="font-mono">Copy Commands</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="p-4 bg-slate-950 max-h-56 overflow-y-auto font-mono text-[11px] text-emerald-300/90 leading-relaxed whitespace-pre">
-              {sshQuickCommands}
-            </div>
+          <div className="relative">
+            <pre className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre max-h-80">
+{TARGET_COMMANDS[target]}
+            </pre>
+            <CopyBtn id="cmds" text={TARGET_COMMANDS[target]} />
           </div>
-
-          {/* Cloud-Init User Data script */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-                AWS EC2 Launch Wizard "User Data" Script
-              </span>
-              <button
-                id="copy-user-data-btn"
-                onClick={() => copyToClipboard(userDataScript, setCopiedUserData)}
-                className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition"
-              >
-                {copiedUserData ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 font-mono">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="font-mono">Copy User Data</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="p-4 bg-slate-950 max-h-52 overflow-y-auto font-mono text-[11px] text-slate-400 leading-relaxed whitespace-pre">
-              {userDataScript}
-            </div>
-          </div>
-
-          {/* Telegram In-Chat Auto-Update Card */}
-          <div className="bg-gradient-to-r from-sky-950/40 to-slate-900 border border-sky-500/30 rounded-2xl p-4 shadow-xl">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">
-                <Terminal className="w-4 h-4" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-xs font-semibold text-slate-200">
-                  Zero-SSH In-Chat Telegram Updater: <code className="text-sky-300 font-mono">.update</code> or <code className="text-sky-300 font-mono">!update</code>
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Whenever you push new code to your GitHub repo, simply send <code className="text-emerald-400 font-mono">.update now</code> (or <code className="text-emerald-400 font-mono">!update now</code>) in any Telegram chat. DcXuserbot will run <code className="text-slate-300 font-mono">git pull</code>, sync requirements, and restart itself automatically on your EC2 instance.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+          <ul className="text-[11px] text-slate-500 space-y-1 list-disc list-inside">
+            <li><b>`.sysinfo`</b> reads the real host: distro, CPU model/cores, RAM, disks, uptime → PNG dashboard.</li>
+            <li><b>`.speedtest`</b> uses Cloudflare edge over HTTPS — no extra binaries, works behind any NAT.</li>
+            <li>Use <code className="text-slate-300">--restart unless-stopped</code> (Docker) or <code className="text-slate-300">Restart=always</code> (systemd) so <code className="text-slate-300">.restart</code> works.</li>
+          </ul>
+        </section>
       </div>
     </div>
   );

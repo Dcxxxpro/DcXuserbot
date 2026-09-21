@@ -6,3 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# DcXuserbot runtime artifacts
+dcxuserbot/data/
+*.session
+*.session-journal
+__pycache__/
+
+# local tooling
+.venv/
