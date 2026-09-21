@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const copyQuickDeployCommand = () => {
-    const cmd = `curl -sSL https://raw.githubusercontent.com/DcXuserbot/Userbot/main/setup_ec2.sh | bash`;
+    const cmd = `git clone https://github.com/Dcxxxpro/DcXuserbot && cd DcXuserbot/dcxuserbot && docker compose up -d --build`;
     navigator.clipboard.writeText(cmd);
     setCopiedQuickCmd(true);
     setTimeout(() => setCopiedQuickCmd(false), 2000);
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="font-semibold text-slate-100 text-base tracking-tight">DcXuserbot</span>
                 <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                  AWS EC2 Ready
+                  v5 • Host-Agnostic
                 </span>
                 <span className="hidden sm:inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Upgraded CatUserbot & Telethon Python Source Suite
+                Inline-First Telegram Userbot • Sysinfo & Speedtest Dashboards
               </p>
             </div>
           </div>
@@ -68,18 +68,18 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="copy-quick-deploy-btn"
               onClick={copyQuickDeployCommand}
-              title="Copy 1-line AWS EC2 shell setup command"
+              title="Copy 1-line Docker quick-start command"
               className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-900 border border-slate-700 hover:bg-slate-800 transition"
             >
               {copiedQuickCmd ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied Script</span>
+                  <span className="text-emerald-400">Copied Command</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5 text-slate-400" />
-                  <span>1-Click EC2 Script</span>
+                  <span>Docker Quick-Start</span>
                 </>
               )}
             </button>
@@ -88,10 +88,10 @@ export const Header: React.FC<HeaderProps> = ({
               id="download-zip-btn"
               onClick={handleDownloadZip}
               disabled={downloading}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 shadow-md shadow-sky-600/20 transition disabled:opacity-75"
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-600 shadow-md shadow-sky-600/20 transition disabled:opacity-75"
             >
               <Download className="w-4 h-4" />
-              <span>{downloading ? 'Bundling ZIP...' : 'Export ZIP (AWS Ready)'}</span>
+              <span>{downloading ? 'Bundling ZIP...' : 'Export ZIP (v5)'}</span>
             </button>
           </div>
         </div>
@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Server className="w-3.5 h-3.5" />
-            <span>AWS EC2 Config & Launch Wizard</span>
+            <span>Config & Deploy Wizard</span>
           </button>
 
           <button

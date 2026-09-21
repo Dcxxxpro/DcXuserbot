@@ -1,0 +1,17 @@
+The DejaVu fonts bundled in this directory are distributed under the
+Bitstream Vera / DejaVu license:
+
+    Fonts are (c) Bitstream (see below). DejaVu changes are in public domain.
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of the fonts accompanying this license ("Fonts") and associated
+    documentation files (the "Font Software"), to reproduce and distribute
+    the Font Software, including without limitation the rights to use, copy,
+    merge, publish, distribute, and/or sell copies of the Font Software, and
+    to permit persons to whom the Font Software is furnished to do so.
+
+    The above copyright and trademark notices and this permission notice
+    shall be included in all copies of one or more of the Font Software
+    typefaces.
+
+Upstreams: https://dejavu-fonts.github.io/

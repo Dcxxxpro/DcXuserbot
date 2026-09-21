@@ -20,11 +20,9 @@ export default function App() {
     botUsername: 'DcXAssistantBot',
     sudoUsers: '',
     commandHandler: '.',
-    aliveName: 'DcX Commander',
-    geminiApiKey: '',
+    aliveName: 'DcX Master',
     groqApiKey: '',
-    awsRegion: 'us-east-1',
-    ec2InstanceType: 't3.micro',
+    geminiApiKey: '',
   });
 
   const handleDownload = () => {
@@ -49,29 +47,29 @@ export default function App() {
             <div className="space-y-1.5 max-w-3xl">
               <div className="flex items-center space-x-2">
                 <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                  Python 3.11+ • Telethon 1.34+ • Dual-Client Engine
+                  Python 3.11+ • Telethon 1.36+ • Dual-Client Engine
                 </span>
                 <span className="text-[11px] text-slate-500 font-mono">
-                  All GitHub Modules Modernized
+                  v5.0 — Clean Rewrite
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-slate-100 tracking-tight">
-                Supreme Telegram Userbot with Inline Buttons & AWS EC2 24/7 Setup
+                Inline-First Telegram Userbot — Sysinfo & Speedtest <span className="text-sky-400">images</span>, anywhere you host
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Engineered with CatUserbot's dual-client pattern (userbot account + companion assistant bot for inline keyboard buttons, pagination & PM permit), auto-allocating 2GB swap space to prevent memory crashes on AWS EC2 Free Tier (<code className="text-slate-300 font-mono">t2.micro / t3.micro</code>), with full background systemd auto-healing.
+                Every one of the <span className="text-slate-200 font-mono">76</span> commands also runs through <span className="text-slate-200 font-mono">inline mode</span> via your BotFather assistant (<code className="text-slate-300 font-mono">@YourBot ping</code>). <code className="text-slate-300 font-mono">.sysinfo</code> and <code className="text-slate-300 font-mono">.speedtest</code> render live dashboard <b>images</b> of the instance — identical behavior on AWS, Heroku, Docker, VPS or Termux. Zero messy deps, crash-shielded plugins.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <a
-                id="hero-download-lionx-btn"
-                href="/lionx_cleaned_ec2.zip"
-                download="LionX_Cleaned_EC2_Ready.zip"
+                id="hero-download-source-btn"
+                href="/dcxuserbot.zip"
+                download="DcXuserbot-v5.zip"
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition shadow-sm"
               >
                 <Download className="w-4 h-4" />
-                <span>Download Cleaned LionX (.zip)</span>
+                <span>Download Source (.zip)</span>
               </a>
 
               <button
@@ -118,16 +116,16 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950 py-4 mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <div className="flex items-center space-x-2">
-            <span>DcXuserbot Telegram Userbot Suite</span>
+            <span>DcXuserbot v5 — Inline-First Telegram Userbot</span>
             <span>•</span>
-            <span>AWS EC2 & Docker Certified</span>
+            <span>Docker / systemd / Heroku / Termux</span>
           </div>
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setActiveTab('wizard')}
               className="hover:text-slate-300 transition"
             >
-              AWS Setup Guide
+              Deploy Guide
             </button>
             <button
               onClick={() => setActiveTab('plugins')}
